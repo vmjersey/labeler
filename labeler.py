@@ -6,16 +6,14 @@ from libs.imaging import convert_bw
 import numpy as np
 import cv2
 from PIL import Image   
-
-# Use the wxPython backend of matplotlib
 import matplotlib       
 matplotlib.use('WXAgg')
-
 # Matplotlib elements used to draw the bounding rectangle
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.patches import Rectangle
 import matplotlib.pyplot as plt
-
+from shapely.geometry import Point
+from shapely.geometry.polygon import Polygon
 
 class ImageLabeler(wx.App):
     '''
@@ -38,19 +36,19 @@ class ImageLabeler(wx.App):
 
         # Add the figure to the wxFigureCanvas
         self.canvas = FigureCanvas(self.frame, -1, self.figure)
-
-        self.canvas.SetCursor(wx.Cursor(wx.CURSOR_HAND))
+        # Set Crosshair as mouse cursor.
+        self.canvas.SetCursor(wx.Cursor(wx.CURSOR_CROSS))
 
         # Connect the mouse events to their relevant callbacks
         self.canvas.mpl_connect('button_press_event',   self.OnLeftDown)
         self.canvas.mpl_connect('button_release_event', self.OnLeftUp)
         self.canvas.mpl_connect('motion_notify_event',  self.OnMotion)
 
+
+
         # Lock to stop the motion event from behaving badly when the mouse isn't pressed
         self.frame.pressed = False
 
-
-        
         self.default_width = 1500
 
         # Setting up the menu.
@@ -82,11 +80,13 @@ class ImageLabeler(wx.App):
 
         # Create the Grid to Hold the Coordinates
         self.BBGrid = gridlib.Grid(self.BBPanel)
-        self.BBGrid.CreateGrid(100, 4)
+        self.BBGrid.CreateGrid(100, 5)
         self.BBGrid.SetColLabelValue(0, "X1")
         self.BBGrid.SetColLabelValue(1, "Y1")
         self.BBGrid.SetColLabelValue(2, "X2")
         self.BBGrid.SetColLabelValue(3, "Y2")
+        self.BBGrid.SetColLabelValue(4, "Label")
+
  
         BBsizer = wx.BoxSizer(wx.VERTICAL)
         BBsizer.Add(self.BBGrid,1,wx.EXPAND|wx.ALL)
@@ -107,14 +107,27 @@ class ImageLabeler(wx.App):
         self.bwbox.SetValue(False)
         self.bwbox.Bind(wx.EVT_CHECKBOX, self.on_bw_check, self.bwbox)
 
+        # Delete Rectangle
+        button = wx.Button(self.ControlPanel, id=wx.ID_ANY, label="Delete")
+        button.Bind(wx.EVT_BUTTON, self.OnDelete)
+
         # Hold list of rectangle coordinates
         self.rect_list = []
+        # Hold list of rectangle objects
+        self.rect_obj_list = []
 
         # A Statusbar in the bottom of the window
         self.frame.CreateStatusBar()
         self.frame.Show(True)
 
         self.NewImage() 
+
+    def OnDelete(self,e):
+
+        rectangle = self.rect_obj_list[2]
+        rectangle.remove()
+        #rectangle.set_visible(False)
+        self.canvas.draw()
 
 
     def OnFileExit(self,e):
@@ -143,17 +156,64 @@ class ImageLabeler(wx.App):
         dlg.ShowModal()
         dlg.Destroy()
 
+    def check_point(self,mouse,rect):
+       
+        x = mouse[0]
+        y = mouse[1]
 
-        
+        xyes = 0
+        yyes = 0
+        x1,y1,x2,y2 = rect
+
+        # Check if mouse is between x1 and x2
+        if x1 < x2:
+            if (x > x1) & (x < x2):
+                xyes += 1
+        else:
+            if (x < x1) & (x>x2):
+                xyes += 1        
+       
+        # Check if mouse is between x1 and x2
+        if y1 < y2:
+            if (y > y1) & (y < y2):
+                yyes += 1
+        else:
+            if (y < y1) & (y>y2):
+                yyes += 1
+
+ 
+        if (xyes > 0) & (yyes > 0):
+            return 1
+        else:
+            return 0
+
     def OnLeftDown(self, event):
+
+        found = 0
+        current_x = event.xdata
+        current_y = event.ydata
+
+        for rect in self.rect_list:
+            
+            result = self.check_point((current_x,current_y),rect)
+            if result == 1:
+                found+=1        
+
+
+        if found > 0:
+            print("Found")
+            return 0
+
 
         # Initialise the rectangle
         self.rect = Rectangle((0,0), 1, 1, facecolor='None', edgecolor='green',linewidth='2')
+
         self.x0 = None
         self.y0 = None
         self.x1 = None
         self.y1 = None
         self.axes.add_patch(self.rect)
+        self.rect_obj_list.append(self.rect)
 
 
         # Check the mouse press was actually on the canvas
@@ -163,6 +223,7 @@ class ImageLabeler(wx.App):
             self.rect.set_linestyle('dashed')
             self.x0 = event.xdata
             self.y0 = event.ydata
+
 
     def OnLeftUp(self,event):
 
@@ -197,7 +258,6 @@ class ImageLabeler(wx.App):
             # Fill the grid with the bounding boxes
             self.fill_grid()
 
-            print(self.rect_list)
 
     def NewImage(self):
 
@@ -214,7 +274,7 @@ class ImageLabeler(wx.App):
         # Display new image to canvas and tiddy up        
         self.image_shape = self.current_image.shape
         # Set Frame to size of image, plust a little extra
-        self.frame.SetSize((self.image_shape[1]+300, self.image_shape[0] + 200))
+        self.frame.SetSize((self.image_shape[1]+550, self.image_shape[0] + 200))
         
         # Set Matplotlib Canvas to size of image
         self.canvas.SetSize((self.image_shape[1], self.image_shape[0]))
@@ -244,17 +304,17 @@ class ImageLabeler(wx.App):
             self.rect.set_xy((self.x0, self.y0))
             self.canvas.draw()
 
+
     def set_panels(self):
         self.ControlPanel.SetPosition((0,self.image_shape[0]+5))
         self.ControlPanel.SetSize((self.image_shape[1],50))
         self.BBPanel.SetPosition((self.image_shape[1]+5,0))
-        self.BBPanel.SetSize((450,self.image_shape[0]))
+        self.BBPanel.SetSize((525,self.image_shape[0]))
 
     def fill_grid(self):
         for rownum in range(len(self.rect_list)):
             row = self.rect_list[rownum]
             for colnum in range(len(row)):
-                print(row[colnum])
                 self.BBGrid.SetCellValue(rownum,colnum, str(row[colnum]))
                 #self.BBGrid.SetCellFont(rownum, colnum, wx.Font(12, wx.ROMAN, wx.ITALIC, wx.NORMAL))   
 
