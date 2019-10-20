@@ -3,6 +3,7 @@
 import wx
 import wx.grid as gridlib
 from libs.imaging import convert_bw
+from libs.utils import check_inside_rect
 import numpy as np
 import cv2
 from PIL import Image   
@@ -11,6 +12,7 @@ matplotlib.use('WXAgg')
 # Matplotlib elements used to draw the bounding rectangle
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.patches import Rectangle
+from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
@@ -27,7 +29,7 @@ class ImageLabeler(wx.App):
         self.frame = wx.Frame(None, title='Image Labeler')
         
         # Intitialise the matplotlib figure
-        self.figure = plt.figure()
+        self.figure = Figure()
 
         # Create an axes, turn off the labels and add them to the figure
         self.axes = plt.Axes(self.figure,[0,0,1,1])      
@@ -43,13 +45,10 @@ class ImageLabeler(wx.App):
         self.canvas.mpl_connect('button_press_event',   self.OnLeftDown)
         self.canvas.mpl_connect('button_release_event', self.OnLeftUp)
         self.canvas.mpl_connect('motion_notify_event',  self.OnMotion)
-
-
+        self.canvas.mpl_connect('key_press_event', self.OnKeyDown)
 
         # Lock to stop the motion event from behaving badly when the mouse isn't pressed
         self.frame.pressed = False
-
-        self.default_width = 1500
 
         # Setting up the menu.
         filemenu  = wx.Menu()
@@ -107,10 +106,6 @@ class ImageLabeler(wx.App):
         self.bwbox.SetValue(False)
         self.bwbox.Bind(wx.EVT_CHECKBOX, self.on_bw_check, self.bwbox)
 
-        # Delete Rectangle
-        button = wx.Button(self.ControlPanel, id=wx.ID_ANY, label="Delete")
-        button.Bind(wx.EVT_BUTTON, self.OnDelete)
-
         # Hold list of rectangle coordinates
         self.rect_list = []
         # Hold list of rectangle objects
@@ -122,19 +117,13 @@ class ImageLabeler(wx.App):
 
         self.NewImage() 
 
-    def OnDelete(self,e):
-
-        rectangle = self.rect_obj_list[2]
-        rectangle.remove()
-        #rectangle.set_visible(False)
-        self.canvas.draw()
 
 
-    def OnFileExit(self,e):
+    def OnFileExit(self,event):
         print("Exiting...")
         self.frame.Close()        
 
-    def OnFileOpen(self,e):
+    def OnFileOpen(self,event):
         # Get the file path you wan to open.
         with wx.FileDialog(self.frame, "Open Image File", 
             wildcard="Image Files *.png|*.jpg", 
@@ -150,42 +139,15 @@ class ImageLabeler(wx.App):
             self.NewImage()
 
 
-    def OnFileAbout(self,e):
+    def OnFileAbout(self,event):
         # A message dialog box with an OK button. wx.OK is a standard ID in wxWidgets.
         dlg = wx.MessageDialog( self.frame, "A GUI for labeling images", "About Image Labeler", wx.OK)
         dlg.ShowModal()
         dlg.Destroy()
 
-    def check_point(self,mouse,rect):
-       
-        x = mouse[0]
-        y = mouse[1]
-
-        xyes = 0
-        yyes = 0
-        x1,y1,x2,y2 = rect
-
-        # Check if mouse is between x1 and x2
-        if x1 < x2:
-            if (x > x1) & (x < x2):
-                xyes += 1
-        else:
-            if (x < x1) & (x>x2):
-                xyes += 1        
-       
-        # Check if mouse is between x1 and x2
-        if y1 < y2:
-            if (y > y1) & (y < y2):
-                yyes += 1
-        else:
-            if (y < y1) & (y>y2):
-                yyes += 1
-
- 
-        if (xyes > 0) & (yyes > 0):
-            return 1
-        else:
-            return 0
+    def OnKeyDown(self,event):
+        if event.key == 'delete':
+            self.OnDelete()
 
     def OnLeftDown(self, event):
 
@@ -193,15 +155,17 @@ class ImageLabeler(wx.App):
         current_x = event.xdata
         current_y = event.ydata
 
-        for rect in self.rect_list:
-            
-            result = self.check_point((current_x,current_y),rect)
+        for i in range(len(self.rect_list)):
+            rect = self.rect_list[i]
+            result = check_inside_rect((current_x,current_y),rect)
             if result == 1:
+                self.selected_rect = i
                 found+=1        
 
 
         if found > 0:
-            print("Found")
+            print("Found: ",self.selected_rect)
+            self.change_rect_color()
             return 0
 
 
@@ -259,6 +223,7 @@ class ImageLabeler(wx.App):
             self.fill_grid()
 
 
+
     def NewImage(self):
 
         # Clear Rectangle List
@@ -305,18 +270,85 @@ class ImageLabeler(wx.App):
             self.canvas.draw()
 
 
+
+    def OnDelete(self):
+        ''' Delete the selected rectangle'''
+        
+        # Don't try to delete if empty
+        if len(self.rect_list)<1:
+            print("There is nothing to delete.")
+            return 1
+        try:
+            self.selected_rect
+        except:
+            print("You haven't selected a rectangle yet.")
+            return 1 
+
+        rectangle = self.rect_obj_list[self.selected_rect]
+        print("Before:",len(self.rect_list))
+        # Remove object from canvas
+        rectangle.remove()
+        # Remove cordinates from list
+        self.rect_list.remove(self.rect_list[self.selected_rect])
+        # Remove object from list
+        self.rect_obj_list.remove(rectangle)
+        # Remove coordinates from grid
+        self.BBGrid.DeleteRows(self.selected_rect)
+
+        # redraw the canvas
+        self.canvas.draw()
+
+        # clear
+        del self.selected_rect
+
+        print("After:",len(self.rect_list)) 
+
+
+    def change_rect_color(self):
+        ''' change the line color of currently selected
+        rectangle
+        '''
+        # Set selected rectangle line color black
+        rect = self.rect_obj_list[self.selected_rect]
+
+        #set everything back to green
+        for i in range(len(self.rect_obj_list)):
+            rect = self.rect_obj_list[i]
+            # Set currently selected rect line as black
+            if i == self.selected_rect:
+                rect.set_edgecolor('red')
+            else: # Set everything else as green
+                rect.set_edgecolor('green')
+            
+        # Also highlight row in grid
+        self.highlight_row(self.selected_rect)
+        
+        self.canvas.draw()
+
     def set_panels(self):
         self.ControlPanel.SetPosition((0,self.image_shape[0]+5))
         self.ControlPanel.SetSize((self.image_shape[1],50))
         self.BBPanel.SetPosition((self.image_shape[1]+5,0))
         self.BBPanel.SetSize((525,self.image_shape[0]))
 
+    def highlight_row(self,rowselect):
+
+        for rownum in range(len(self.rect_list)):
+            row = self.rect_list[rownum]
+            for colnum in range(len(row)):
+                if rownum == rowselect:
+                    self.BBGrid.SetCellBackgroundColour(rownum,colnum, "light blue")
+                else:
+                    self.BBGrid.SetCellBackgroundColour(rownum,colnum, "white")
+
+
+        self.BBGrid.ForceRefresh()
+
     def fill_grid(self):
         for rownum in range(len(self.rect_list)):
             row = self.rect_list[rownum]
             for colnum in range(len(row)):
                 self.BBGrid.SetCellValue(rownum,colnum, str(row[colnum]))
-                #self.BBGrid.SetCellFont(rownum, colnum, wx.Font(12, wx.ROMAN, wx.ITALIC, wx.NORMAL))   
 
     def clear_boxes(self):
         # Uncheck all the boxes
