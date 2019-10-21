@@ -13,6 +13,7 @@ matplotlib.use('WXAgg')
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.patches import Rectangle
 from matplotlib.figure import Figure
+from matplotlib.backends.backend_wxagg import NavigationToolbar2WxAgg as NavigationToolbar
 import matplotlib.pyplot as plt
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
@@ -38,8 +39,14 @@ class ImageLabeler(wx.App):
 
         # Add the figure to the wxFigureCanvas
         self.canvas = FigureCanvas(self.frame, -1, self.figure)
+        self.toolbar = NavigationToolbar(self.canvas)
+        self.toolbar.Hide()
+        
         # Set Crosshair as mouse cursor.
         self.canvas.SetCursor(wx.Cursor(wx.CURSOR_CROSS))
+        
+        # What mode is the cursor in: bb,toolbar
+        self.cursor_mode = "bb"
 
         # Connect the mouse events to their relevant callbacks
         self.canvas.mpl_connect('button_press_event',   self.OnLeftDown)
@@ -106,6 +113,20 @@ class ImageLabeler(wx.App):
         self.bwbox.SetValue(False)
         self.bwbox.Bind(wx.EVT_CHECKBOX, self.on_bw_check, self.bwbox)
 
+
+         
+        self.sibut = wx.ToggleButton(self.ControlPanel,2,"Zoom", pos=(400,5))
+        self.sibut.Bind(wx.EVT_TOGGLEBUTTON,self.zoom)
+         
+        self.hmbut = wx.ToggleButton(self.ControlPanel,2,"Home", pos=(300,5))
+        self.hmbut.Bind(wx.EVT_TOGGLEBUTTON,self.home)
+         
+        self.hibut = wx.ToggleButton(self.ControlPanel,2,"Pan",  pos=(200,5))
+        self.hibut.Bind(wx.EVT_TOGGLEBUTTON,self.pan)
+         
+
+
+
         # Hold list of rectangle coordinates
         self.rect_list = []
         # Hold list of rectangle objects
@@ -118,6 +139,38 @@ class ImageLabeler(wx.App):
         self.NewImage() 
 
 
+    def toggle_cursor_mode(self,button):
+        '''  
+            Change cursor_mode between bb and toolbar 
+            Changes button color
+        '''
+
+        if self.cursor_mode == "toolbar":
+            self.cursor_mode = "bb"
+            button.SetBackgroundColour("green")
+
+        else:
+            self.cursor_mode = "toolbar"
+            button.SetBackgroundColour(wx.Colour(0, 0, 0))
+        
+        self.ControlPanel.Refresh()
+
+
+    def zoom(self,event):
+        ''' Use Matplotlibs zoom tool'''
+        self.toggle_cursor_mode(self.sibut)
+        self.toolbar.zoom()
+ 
+    def home(self,event):
+        ''' Return view back to original position'''
+        self.toggle_cursor_mode(self.hmbut)
+        self.toolbar.home()
+         
+    def pan(self,event):
+        '''Uses Matplotlibs pan tool'''
+        self.toggle_cursor_mode(self.hibut)
+        self.toolbar.pan()
+ 
 
     def OnFileExit(self,event):
         print("Exiting...")
@@ -166,6 +219,10 @@ class ImageLabeler(wx.App):
         if found > 0:
             print("Found: ",self.selected_rect)
             self.change_rect_color()
+            return 0
+
+
+        if self.cursor_mode == "toolbar":
             return 0
 
 
@@ -231,6 +288,9 @@ class ImageLabeler(wx.App):
 
         # Read new image off disk
         self.original_image = cv2.imread(self.imagepath)
+
+        #Matplotlib is RGB, opencv is BGR
+        self.original_image = cv2.cvtColor(self.original_image, cv2.COLOR_BGR2RGB)
         self.current_image = self.original_image.copy()
         self.DisplayImage()
 
@@ -285,7 +345,6 @@ class ImageLabeler(wx.App):
             return 1 
 
         rectangle = self.rect_obj_list[self.selected_rect]
-        print("Before:",len(self.rect_list))
         # Remove object from canvas
         rectangle.remove()
         # Remove cordinates from list
@@ -301,7 +360,6 @@ class ImageLabeler(wx.App):
         # clear
         del self.selected_rect
 
-        print("After:",len(self.rect_list)) 
 
 
     def change_rect_color(self):
