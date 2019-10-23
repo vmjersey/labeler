@@ -2,14 +2,15 @@
 
 import wx
 import wx.grid as gridlib
+import wx.lib.agw.buttonpanel as BP
 from libs.imaging import convert_bw
+from libs.imaging import read_image_as_bitmap
 from libs.utils import check_inside_rect
 import numpy as np
+import os
 import cv2
 from PIL import Image   
 import matplotlib       
-matplotlib.use('WXAgg')
-# Matplotlib elements used to draw the bounding rectangle
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.patches import Rectangle
 from matplotlib.figure import Figure
@@ -17,6 +18,9 @@ from matplotlib.backends.backend_wxagg import NavigationToolbar2WxAgg as Navigat
 import matplotlib.pyplot as plt
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
+
+matplotlib.use('WXAgg')
+
 
 class ImageLabeler(wx.App):
     '''
@@ -28,7 +32,9 @@ class ImageLabeler(wx.App):
         wx.App.__init__(self) 
 
         self.frame = wx.Frame(None, title='Image Labeler')
-        
+
+        root_dir = os.path.abspath(__file__)       
+
         # Intitialise the matplotlib figure
         self.figure = Figure()
 
@@ -40,13 +46,14 @@ class ImageLabeler(wx.App):
         # Add the figure to the wxFigureCanvas
         self.canvas = FigureCanvas(self.frame, -1, self.figure)
         self.toolbar = NavigationToolbar(self.canvas)
+        self.toolbar.Realize()
         self.toolbar.Hide()
-        
+       
         # Set Crosshair as mouse cursor.
         self.canvas.SetCursor(wx.Cursor(wx.CURSOR_CROSS))
         
         # What mode is the cursor in: bb,toolbar
-        self.cursor_mode = "bb"
+        self.cursor_mode = "nobb"
 
         # Connect the mouse events to their relevant callbacks
         self.canvas.mpl_connect('button_press_event',   self.OnLeftDown)
@@ -83,7 +90,6 @@ class ImageLabeler(wx.App):
         self.BBPanel = wx.Panel(self.frame,style=wx.BORDER_SUNKEN | wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.CAPTION)
         self.BBPanel.SetBackgroundColour("red")
 
-
         # Create the Grid to Hold the Coordinates
         self.BBGrid = gridlib.Grid(self.BBPanel)
         self.BBGrid.CreateGrid(100, 5)
@@ -92,14 +98,11 @@ class ImageLabeler(wx.App):
         self.BBGrid.SetColLabelValue(2, "X2")
         self.BBGrid.SetColLabelValue(3, "Y2")
         self.BBGrid.SetColLabelValue(4, "Label")
-
  
         BBsizer = wx.BoxSizer(wx.VERTICAL)
         BBsizer.Add(self.BBGrid,1,wx.EXPAND|wx.ALL)
         self.BBPanel.SetSizer(BBsizer)
     
-
-
         # Create Panel for Image Controls.
         self.ControlPanel = wx.Panel(self.frame,style=wx.BORDER_SUNKEN | wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.CAPTION)
 
@@ -113,20 +116,24 @@ class ImageLabeler(wx.App):
         self.bwbox.SetValue(False)
         self.bwbox.Bind(wx.EVT_CHECKBOX, self.on_bw_check, self.bwbox)
 
-
-         
-        self.sibut = wx.ToggleButton(self.ControlPanel,2,"Zoom", pos=(400,5))
+        self.button_list = []
+        self.sibut = wx.ToggleButton(self.ControlPanel,-1,"Zoom", pos=(400,5))
         self.sibut.Bind(wx.EVT_TOGGLEBUTTON,self.zoom)
+        self.button_list.append(self.sibut)
          
-        self.hmbut = wx.ToggleButton(self.ControlPanel,2,"Home", pos=(300,5))
+        self.hmbut = wx.ToggleButton(self.ControlPanel,-1,"Home", pos=(300,5))
         self.hmbut.Bind(wx.EVT_TOGGLEBUTTON,self.home)
+        self.button_list.append(self.hmbut)
          
-        self.hibut = wx.ToggleButton(self.ControlPanel,2,"Pan",  pos=(200,5))
+        self.hibut = wx.ToggleButton(self.ControlPanel,-1,"Pan",  pos=(200,5))
         self.hibut.Bind(wx.EVT_TOGGLEBUTTON,self.pan)
-         
+        self.button_list.append(self.hibut)
 
+        self.plotbut = wx.Button(self.ControlPanel,-1,"Plot", pos=(500,5))
+        self.plotbut.Bind(wx.EVT_BUTTON,self.plot)
+        self.button_list.append(self.plotbut) 
 
-
+ 
         # Hold list of rectangle coordinates
         self.rect_list = []
         # Hold list of rectangle objects
@@ -145,33 +152,42 @@ class ImageLabeler(wx.App):
             Changes button color
         '''
 
-        if self.cursor_mode == "toolbar":
-            self.cursor_mode = "bb"
-            button.SetBackgroundColour("green")
-
-        else:
-            self.cursor_mode = "toolbar"
-            button.SetBackgroundColour(wx.Colour(0, 0, 0))
+        for butt in self.button_list:
+            if butt.GetLabel() == "Home":
+                next
+            if butt.GetLabel() == "Plot":
+                next
+            if button == butt:
+                butt.Hide()
+            else:
+                butt.Show()
         
-        self.ControlPanel.Refresh()
-
-
+        
     def zoom(self,event):
         ''' Use Matplotlibs zoom tool'''
+        self.cursor_mode = "nobb"
         self.toggle_cursor_mode(self.sibut)
         self.toolbar.zoom()
  
     def home(self,event):
         ''' Return view back to original position'''
-        self.toggle_cursor_mode(self.hmbut)
+        self.cursor_mode = "nobb"
+        self.toggle_cursor_mode(self.sibut)
         self.toolbar.home()
+        self.toolbar.release_zoom()
          
     def pan(self,event):
         '''Uses Matplotlibs pan tool'''
+        self.cursor_mode = "nobb"
         self.toggle_cursor_mode(self.hibut)
         self.toolbar.pan()
- 
 
+    def plot(self,event):
+        self.cursor_mode = "bb"
+        self.toolbar.release_zoom()
+        self.toggle_cursor_mode(self.plotbut)
+        #self.toolbar.plot()       
+  
     def OnFileExit(self,event):
         print("Exiting...")
         self.frame.Close()        
@@ -190,7 +206,6 @@ class ImageLabeler(wx.App):
             self.imagepath = pathname
 
             self.NewImage()
-
 
     def OnFileAbout(self,event):
         # A message dialog box with an OK button. wx.OK is a standard ID in wxWidgets.
@@ -215,16 +230,12 @@ class ImageLabeler(wx.App):
                 self.selected_rect = i
                 found+=1        
 
-
         if found > 0:
-            print("Found: ",self.selected_rect)
             self.change_rect_color()
             return 0
 
-
-        if self.cursor_mode == "toolbar":
+        if self.cursor_mode == "nobb":
             return 0
-
 
         # Initialise the rectangle
         self.rect = Rectangle((0,0), 1, 1, facecolor='None', edgecolor='green',linewidth='2')
@@ -236,7 +247,6 @@ class ImageLabeler(wx.App):
         self.axes.add_patch(self.rect)
         self.rect_obj_list.append(self.rect)
 
-
         # Check the mouse press was actually on the canvas
         if event.xdata is not None and event.ydata is not None:
             # Upon initial press of the mouse record the origin and record the mouse as pressed
@@ -244,7 +254,6 @@ class ImageLabeler(wx.App):
             self.rect.set_linestyle('dashed')
             self.x0 = event.xdata
             self.y0 = event.ydata
-
 
     def OnLeftUp(self,event):
 
@@ -279,8 +288,6 @@ class ImageLabeler(wx.App):
             # Fill the grid with the bounding boxes
             self.fill_grid()
 
-
-
     def NewImage(self):
 
         # Clear Rectangle List
@@ -309,7 +316,6 @@ class ImageLabeler(wx.App):
         self.axes.imshow(self.current_image) 
         self.canvas.draw()
 
-
     def OnMotion(self,event):
 
         # If the mouse has been pressed draw an updated rectangle when the mouse is 
@@ -328,8 +334,6 @@ class ImageLabeler(wx.App):
             self.rect.set_height(self.y1 - self.y0)
             self.rect.set_xy((self.x0, self.y0))
             self.canvas.draw()
-
-
 
     def OnDelete(self):
         ''' Delete the selected rectangle'''
@@ -359,8 +363,6 @@ class ImageLabeler(wx.App):
 
         # clear
         del self.selected_rect
-
-
 
     def change_rect_color(self):
         ''' change the line color of currently selected
@@ -421,7 +423,6 @@ class ImageLabeler(wx.App):
         else:
             self.current_image = self.original_image
             self.DisplayImage()
-
 
 
 app = ImageLabeler()
