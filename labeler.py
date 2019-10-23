@@ -10,7 +10,8 @@ import numpy as np
 import os
 import cv2
 from PIL import Image   
-import matplotlib       
+import matplotlib  
+from matplotlib.backend_tools import Cursors     
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.patches import Rectangle
 from matplotlib.figure import Figure
@@ -49,8 +50,6 @@ class ImageLabeler(wx.App):
         self.toolbar.Realize()
         self.toolbar.Hide()
        
-        # Set Crosshair as mouse cursor.
-        self.canvas.SetCursor(wx.Cursor(wx.CURSOR_CROSS))
         
         # What mode is the cursor in: bb,toolbar
         self.cursor_mode = "nobb"
@@ -116,17 +115,19 @@ class ImageLabeler(wx.App):
         self.bwbox.SetValue(False)
         self.bwbox.Bind(wx.EVT_CHECKBOX, self.on_bw_check, self.bwbox)
 
+        # Create Buttons to help label image
         self.button_list = []
-        self.sibut = wx.ToggleButton(self.ControlPanel,-1,"Zoom", pos=(400,5))
-        self.sibut.Bind(wx.EVT_TOGGLEBUTTON,self.zoom)
+
+        self.sibut = wx.Button(self.ControlPanel,-1,"Zoom", pos=(400,5))
+        self.sibut.Bind(wx.EVT_BUTTON,self.zoom)
         self.button_list.append(self.sibut)
          
-        self.hmbut = wx.ToggleButton(self.ControlPanel,-1,"Home", pos=(300,5))
-        self.hmbut.Bind(wx.EVT_TOGGLEBUTTON,self.home)
+        self.hmbut = wx.Button(self.ControlPanel,-1,"Home", pos=(300,5))
+        self.hmbut.Bind(wx.EVT_BUTTON,self.home)
         self.button_list.append(self.hmbut)
          
-        self.hibut = wx.ToggleButton(self.ControlPanel,-1,"Pan",  pos=(200,5))
-        self.hibut.Bind(wx.EVT_TOGGLEBUTTON,self.pan)
+        self.hibut = wx.Button(self.ControlPanel,-1,"Pan",  pos=(200,5))
+        self.hibut.Bind(wx.EVT_BUTTON,self.pan)
         self.button_list.append(self.hibut)
 
         self.plotbut = wx.Button(self.ControlPanel,-1,"Plot", pos=(500,5))
@@ -153,10 +154,6 @@ class ImageLabeler(wx.App):
         '''
 
         for butt in self.button_list:
-            if butt.GetLabel() == "Home":
-                next
-            if butt.GetLabel() == "Plot":
-                next
             if button == butt:
                 butt.Hide()
             else:
@@ -172,10 +169,14 @@ class ImageLabeler(wx.App):
     def home(self,event):
         ''' Return view back to original position'''
         self.cursor_mode = "nobb"
-        self.toggle_cursor_mode(self.sibut)
+        self.toggle_cursor_mode(self.hmbut)
         self.toolbar.home()
-        self.toolbar.release_zoom()
-         
+        # Toggle off the zoom and pan buttons
+        if self.toolbar._active == 'ZOOM':
+            self.toolbar.zoom()
+        elif self.toolbar._active == 'PAN':
+            self.toolbar.pan()
+ 
     def pan(self,event):
         '''Uses Matplotlibs pan tool'''
         self.cursor_mode = "nobb"
@@ -184,10 +185,14 @@ class ImageLabeler(wx.App):
 
     def plot(self,event):
         self.cursor_mode = "bb"
-        self.toolbar.release_zoom()
         self.toggle_cursor_mode(self.plotbut)
-        #self.toolbar.plot()       
-  
+        # Set Crosshair as mouse cursor.
+        # Toggle off zoom and pan buttons
+        if self.toolbar._active == 'ZOOM':
+            self.toolbar.zoom()
+        elif self.toolbar._active == 'PAN':
+            self.toolbar.pan() 
+ 
     def OnFileExit(self,event):
         print("Exiting...")
         self.frame.Close()        
