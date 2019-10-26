@@ -14,6 +14,7 @@ import matplotlib
 from matplotlib.backend_tools import Cursors     
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.patches import Rectangle
+from matplotlib.widgets import RectangleSelector
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_wxagg import NavigationToolbar2WxAgg as NavigationToolbar
 import matplotlib.pyplot as plt
@@ -134,6 +135,8 @@ class ImageLabeler(wx.App):
         self.plotbut.Bind(wx.EVT_BUTTON,self.plot)
         self.button_list.append(self.plotbut) 
 
+        # Are we moving the rectangle or creating a new one
+        self.is_moving = False
  
         # Hold list of rectangle coordinates
         self.rect_list = []
@@ -224,6 +227,7 @@ class ImageLabeler(wx.App):
 
     def OnLeftDown(self, event):
 
+        # Is the click inside a rectangle?
         found = 0
         current_x = event.xdata
         current_y = event.ydata
@@ -235,8 +239,17 @@ class ImageLabeler(wx.App):
                 self.selected_rect = i
                 found+=1        
 
+
+        # We want to select this rectangle, and move it
         if found > 0:
+            print("Found")
+            self.is_moving = True
             self.change_rect_color()
+            self.selected_rect_obj = self.rect_obj_list[self.selected_rect]
+            self.x0,self.y0 = self.selected_rect_obj.xy
+            self.x1 = None
+            self.y1 = None
+            self.press = self.x0, self.y0, event.xdata, event.ydata
             return 0
 
         if self.cursor_mode == "nobb":
@@ -250,7 +263,6 @@ class ImageLabeler(wx.App):
         self.x1 = None
         self.y1 = None
         self.axes.add_patch(self.rect)
-        self.rect_obj_list.append(self.rect)
 
         # Check the mouse press was actually on the canvas
         if event.xdata is not None and event.ydata is not None:
@@ -260,11 +272,60 @@ class ImageLabeler(wx.App):
             self.x0 = event.xdata
             self.y0 = event.ydata
 
+    def OnMotion(self,event):
+        
+
+        if self.is_moving == True:
+            if event.xdata is not None and event.ydata is not None: 
+                #print(type(self.selected_rect_obj))
+                if self.press is None: return
+                self.x0, self.y0, xpress, ypress = self.press
+                dx = event.xdata - xpress
+                dy = event.ydata - ypress
+                self.x1 = self.x0+dx
+                self.y1 = self.y0+dy
+                self.selected_rect_obj.set_x(self.x1)
+                self.selected_rect_obj.set_y(self.y1)
+                self.selected_rect_obj.figure.canvas.draw()
+            return 0
+        # If the mouse has been pressed draw an updated rectangle when the mouse is 
+        # moved so the user can see what the current selection is
+        elif self.frame.pressed:
+
+            # Check the mouse was released on the canvas, 
+            # and if it wasn't then just leave the width and 
+            # height as the last values set by the motion event
+            if event.xdata is not None and event.ydata is not None:
+                self.x1 = event.xdata
+                self.y1 = event.ydata
+
+            # Set the width and height and draw the rectangle
+            self.rect.set_width(self.x1 - self.x0)
+            self.rect.set_height(self.y1 - self.y0)
+            self.rect.set_xy((self.x0, self.y0))
+            self.canvas.draw()
+
     def OnLeftUp(self,event):
 
-        # Check that the mouse was actually pressed on the canvas to begin with and this isn't a rouge mouse 
-        # release event that started somewhere else
-        if self.frame.pressed:
+        if self.is_moving == True:
+
+            x0 = self.selected_rect_obj.get_bbox().x0
+            y0 = self.selected_rect_obj.get_bbox().y0
+            x1 = self.selected_rect_obj.get_bbox().x1
+            y1 = self.selected_rect_obj.get_bbox().y1
+
+            self.selected_rect_obj.figure.canvas.draw()
+            self.is_moving = False
+
+            # Keep List of Bounding Boxes        
+            self.rect_list[self.selected_rect] = [int(x0),int(y0),int(x1),int(y1)]
+
+            self.press = None
+            
+            # Update Grid with new coordinates
+            self.fill_grid()
+            return 0
+        elif self.frame.pressed:
 
             # Upon release draw the rectangle as a solid rectangle
             self.frame.pressed = False
@@ -290,9 +351,12 @@ class ImageLabeler(wx.App):
             # Keep List of Bounding Boxes        
             self.rect_list.append([int(self.x0),int(self.y0),int(self.x1),int(self.y1)])
 
+            # Keep list of rect objects
+            self.rect_obj_list.append(self.rect)
+
             # Fill the grid with the bounding boxes
             self.fill_grid()
-
+ 
     def NewImage(self):
 
         # Clear Rectangle List
@@ -320,25 +384,6 @@ class ImageLabeler(wx.App):
         # Display the image on the canvas
         self.axes.imshow(self.current_image) 
         self.canvas.draw()
-
-    def OnMotion(self,event):
-
-        # If the mouse has been pressed draw an updated rectangle when the mouse is 
-        # moved so the user can see what the current selection is
-        if self.frame.pressed:
-
-            # Check the mouse was released on the canvas, 
-            # and if it wasn't then just leave the width and 
-            # height as the last values set by the motion event
-            if event.xdata is not None and event.ydata is not None:
-                self.x1 = event.xdata
-                self.y1 = event.ydata
-            
-            # Set the width and height and draw the rectangle
-            self.rect.set_width(self.x1 - self.x0)
-            self.rect.set_height(self.y1 - self.y0)
-            self.rect.set_xy((self.x0, self.y0))
-            self.canvas.draw()
 
     def OnDelete(self):
         ''' Delete the selected rectangle'''
