@@ -171,13 +171,17 @@ class ImageLabeler(wx.App):
         
         
     def zoom(self,event):
-        ''' Use Matplotlibs zoom tool'''
+        '''
+            Use Matplotlibs zoom tool
+        '''
         self.cursor_mode = "nobb"
         self.toggle_cursor_mode(self.sibut)
         self.toolbar.zoom()
  
     def home(self,event):
-        ''' Return view back to original position'''
+        '''
+            Return view back to original position
+        '''
         self.cursor_mode = "nobb"
         self.toggle_cursor_mode(self.hmbut)
         self.toolbar.home()
@@ -188,12 +192,17 @@ class ImageLabeler(wx.App):
             self.toolbar.pan()
  
     def pan(self,event):
-        '''Uses Matplotlibs pan tool'''
+        '''
+            Uses Matplotlibs pan tool
+        '''
         self.cursor_mode = "nobb"
         self.toggle_cursor_mode(self.hibut)
         self.toolbar.pan()
 
     def plot(self,event):
+        '''
+            Draw a rectangle on the canvas
+        '''
         self.cursor_mode = "bb"
         self.toggle_cursor_mode(self.plotbut)
         # Set Crosshair as mouse cursor.
@@ -233,6 +242,9 @@ class ImageLabeler(wx.App):
             self.OnDelete()
 
     def OnLeftDown(self, event):
+        '''
+            Actions taken when mouse button is pressed
+        '''
 
         # Is the click inside a rectangle?
         found = 0
@@ -261,6 +273,7 @@ class ImageLabeler(wx.App):
         if self.cursor_mode == "nobb":
             return 0
 
+        # If the above is not satisified, it is time to draw a new rectangle
         # Initialise the rectangle
         self.rect = Rectangle((0,0), 1, 1, facecolor='None', edgecolor='green',linewidth='2')
 
@@ -279,8 +292,11 @@ class ImageLabeler(wx.App):
             self.y0 = event.ydata
 
     def OnMotion(self,event):
-        
+        '''
+            Action taken when mouse movement happens over the canvas
+        '''
 
+        # If a rectangle is selected and needs to be moved
         if self.is_moving == True:
             if event.xdata is not None and event.ydata is not None: 
                 if self.press is None: return
@@ -311,7 +327,11 @@ class ImageLabeler(wx.App):
             self.canvas.draw()
 
     def OnLeftUp(self,event):
-
+        '''
+            Actions taken with mouse button is released
+        '''
+        
+        # Rectangle has finished moving and objects need to be updated.
         if self.is_moving == True:
 
             x0 = self.selected_rect_obj.get_bbox().x0
@@ -327,14 +347,15 @@ class ImageLabeler(wx.App):
             # Update Grid with new coordinates
             self.fill_grid()
             return 0
+        # A new rectangle is finished being drawn
         elif self.frame.pressed:
 
             # Upon release draw the rectangle as a solid rectangle
             self.frame.pressed = False
             self.rect.set_linestyle('solid')
 
-            # Check the mouse was released on the canvas, and if it wasn't then just leave the width and 
-            # height as the last values set by the motion event
+            # Check the mouse was released on the canvas, and if it wasn't then 
+            # just leave the width and height as the last values set by the motion event
             if event.xdata is not None and event.ydata is not None:
                 self.x1 = event.xdata
                 self.y1 = event.ydata
@@ -357,6 +378,9 @@ class ImageLabeler(wx.App):
             self.fill_grid()
  
     def NewImage(self):
+        '''
+            A new image is selected and needs to be read in
+        '''
 
         # Clear Rectangle List
         self.rect_obj_list = [] 
@@ -370,8 +394,10 @@ class ImageLabeler(wx.App):
         self.DisplayImage()
 
     def DisplayImage(self):
+        '''
+            Display new image to Matplotlib canvas and tiddy up
+        '''
 
-        # Display new image to canvas and tiddy up        
         self.image_shape = self.current_image.shape
         # Set Frame to size of image, plust a little extra
         self.frame.SetSize((self.image_shape[1]+550, self.image_shape[0] + 200))
@@ -385,7 +411,9 @@ class ImageLabeler(wx.App):
         self.canvas.draw()
 
     def OnDelete(self):
-        ''' Delete the selected rectangle'''
+        ''' 
+            Delete the selected rectangle
+        '''
         
         # Don't try to delete if empty
         if len(self.rect_obj_list)<1:
@@ -412,8 +440,8 @@ class ImageLabeler(wx.App):
         del self.selected_rect
 
     def change_rect_color(self):
-        ''' change the line color of currently selected
-        rectangle
+        ''' 
+            change the line color of currently selected rectangle
         '''
         # Set selected rectangle line color black
         rect = self.rect_obj_list[self.selected_rect]
@@ -433,6 +461,9 @@ class ImageLabeler(wx.App):
         self.canvas.draw()
 
     def set_panels(self):
+        '''
+            Set the size and position of the pannels based on the images size.
+        '''
         self.ControlPanel.SetPosition((0,self.image_shape[0]+5))
         self.ControlPanel.SetSize((self.image_shape[1],50))
 
@@ -443,6 +474,9 @@ class ImageLabeler(wx.App):
         self.GridControlPanel.SetSize((525,50))
 
     def highlight_row(self,rowselect):
+        '''
+            Highlight the row in the Grid of the selected rectangle
+        '''
 
         column_labels,grid_list = get_grid_list(self)
 
@@ -456,13 +490,16 @@ class ImageLabeler(wx.App):
         self.BBGrid.ForceRefresh()
 
     def save_grid(self,event):
+        '''
+            Save the selected bounding boxes to some file, database,etc 
+        '''
         write_grid_csv(self)
 
         
     def fill_grid(self):
         '''
             Populate the grid from the list of coordinate found in the Rectangle
-            Objects in rect_obj_list 
+            objects in rect_obj_list 
         '''
 
         coord_list = get_rect_coords(self)
@@ -472,10 +509,16 @@ class ImageLabeler(wx.App):
                 self.BBGrid.SetCellValue(rownum,colnum, str(row[colnum]))
 
     def clear_boxes(self):
+        '''
+            Uncheck the boxes
+        '''
         # Uncheck all the boxes
         self.bwbox.SetValue(False)
 
     def on_bw_check(self,e):
+        '''
+            Action taken with box is either checked or unchecked
+        '''
         # If checked convert to black and white
         # If uncheck convert back to original image
         if self.bwbox.GetValue() == True:
