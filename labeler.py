@@ -33,7 +33,9 @@ class ImageLabeler(wx.App):
 
         wx.App.__init__(self) 
 
-        self.frame = wx.Frame(None, title='Image Labeler')
+        # Frame that will contain image and grid
+        self.frame = wx.Frame(None, title='Image Display')
+
 
         root_dir = os.path.abspath(__file__)       
 
@@ -108,17 +110,12 @@ class ImageLabeler(wx.App):
         BBsizer = wx.BoxSizer(wx.VERTICAL)
         BBsizer.Add(self.BBGrid,1,wx.EXPAND|wx.ALL)
         self.BBPanel.SetSizer(BBsizer)
-    
+
         # Create Panel for Image Controls.
         self.ControlPanel = wx.Panel(self.frame,style=wx.BORDER_SUNKEN | wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.CAPTION)
         self.ControlBox = wx.BoxSizer(wx.VERTICAL)
         self.ControlBox.Add(self.ControlPanel)
         self.ControlPanel.SetBackgroundColour("red")
-
-        # Convert image to black and white
-        self.bwbox = wx.CheckBox(self.ControlPanel, label='Black and White', pos=(20,10))
-        self.bwbox.SetValue(False)
-        self.bwbox.Bind(wx.EVT_CHECKBOX, self.on_bw_check, self.bwbox)
 
         # Create Buttons to help label image
         self.button_list = []
@@ -156,11 +153,31 @@ class ImageLabeler(wx.App):
         # Hold list of rectangle objects
         self.rect_obj_list = []
 
-        # A Statusbar in the bottom of the window
+        # A Statusbar i the bottom of the window
         self.frame.CreateStatusBar()
         self.frame.Show(True)
 
         self.NewImage() 
+
+
+        self.TransFrame = wx.Frame(None, title='Image Tools')
+        
+        # Create Panel for Image Transformations Tools
+        self.TransPanel = wx.Panel(self.TransFrame,style=wx.BORDER_SUNKEN | wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.CAPTION)
+        self.TransBox = wx.BoxSizer(wx.VERTICAL)
+        self.TransBox.Add(self.TransPanel)
+        self.TransPanel.SetBackgroundColour("green")
+
+        # Check box to transform image
+        self.bwbox = wx.CheckBox(self.TransPanel, label='Black and White', pos=(20,10))
+        self.bwbox.SetValue(False)
+        self.bwbox.Bind(wx.EVT_CHECKBOX, self.on_bw_check, self.bwbox)
+
+
+        self.TransFrame.Show(True)
+   
+
+
 
 
     def toggle_cursor_mode(self,button):
@@ -250,8 +267,6 @@ class ImageLabeler(wx.App):
 
             # Write to that file
             write_image(self,imagepathname)
-
-
 
     def OnFileOpen(self,event):
         # Get the file path you wan to open.
@@ -509,6 +524,7 @@ class ImageLabeler(wx.App):
 
         self.GridControlPanel.SetPosition((self.image_shape[1]+5,self.image_shape[0]+5))
         self.GridControlPanel.SetSize((525,50))
+
 
     def highlight_row(self,rowselect):
         '''
