@@ -440,7 +440,7 @@ class ImageLabeler(wx.App):
         self.BBPanel.SetSize((525,self.image_shape[0]))
 
         self.GridControlPanel.SetPosition((self.image_shape[1]+5,self.image_shape[0]+5))
-        self.GridControlPanel.SetSize((525,1000))
+        self.GridControlPanel.SetSize((525,50))
 
     def highlight_row(self,rowselect):
 
