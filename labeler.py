@@ -68,7 +68,10 @@ class ImageLabeler(wx.App):
         filemenu  = wx.Menu()
         menuAbout = filemenu.Append(wx.ID_ABOUT, "&About", "Information About This Program")
         menuOpen  = filemenu.Append(wx.ID_OPEN,  "&Open",  "Open File")
+        menuSaveGrid = filemenu.Append(wx.ID_SAVE,  "&Save Grid",  "Save Coordinates to CSV file")
         menuExit  = filemenu.Append(wx.ID_EXIT,  "&Exit",  "Exit Image Labeler")
+        
+
 
         # Creating the menubar.
         menuBar = wx.MenuBar()
@@ -80,6 +83,7 @@ class ImageLabeler(wx.App):
         self.frame.Bind(wx.EVT_MENU, self.OnFileAbout, menuAbout)
         self.frame.Bind(wx.EVT_MENU, self.OnFileOpen, menuOpen)
         self.frame.Bind(wx.EVT_MENU, self.OnFileExit, menuExit)
+        self.frame.Bind(wx.EVT_MENU, self.OnSaveGrid, menuSaveGrid)
 
         #Keep track of how many images you have displayed
         self.imagecounter = 0
@@ -215,6 +219,22 @@ class ImageLabeler(wx.App):
     def OnFileExit(self,event):
         print("Exiting...")
         self.frame.Close()        
+
+
+    def OnSaveGrid(self,event):
+        '''
+            Choose filename to save a CSV with grid with the coordinates.
+        '''
+        with wx.FileDialog(self.frame, "Save CSV file", wildcard="CSV files (*.csv)",style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
+            if fileDialog.ShowModal() == wx.ID_CANCEL:
+                return     # the user changed their mind
+
+            # Get Pathname
+            pathname = fileDialog.GetPath()
+            
+            # Write to that file
+            write_grid_csv(self,pathname)
+
 
     def OnFileOpen(self,event):
         # Get the file path you wan to open.

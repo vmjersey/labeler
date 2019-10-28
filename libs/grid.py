@@ -29,16 +29,17 @@ def get_grid_list(master):
     return column_labels,grid_list
 
 
-def write_grid_csv(master):
+def write_grid_csv(master,default_csvfile=''):
     ''' 
         Writes out the contents of bounding box grid to a csv file.
     '''
 
-    # By default we want to name the csv file with the same file prefix.
-    fileroot = os.path.basename(master.imagepath)
-    id = os.path.splitext(fileroot)[0]
+    if default_csvfile == '':
+        # By default we want to name the csv file with the same file prefix.
+        fileroot = os.path.basename(master.imagepath)
+        id = os.path.splitext(fileroot)[0]
+        default_csvfile = id+".csv"
 
-    default_csvfile = id+".csv"    
 
     # Get column titles and coordinates in string from
     column_labels,grid_list = get_grid_list(master)
