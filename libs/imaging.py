@@ -15,4 +15,13 @@ def read_image_as_bitmap(filepath):
     bitmap = wx.Image(filepath, wx.BITMAP_TYPE_ANY).ConvertToBitmap()
     return bitmap
 
+def write_image(master,imagepathname):
+    '''
+        Save image to a file
+    '''
+    #image = master.current_image.copy()
+    #image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+    #cv2.imwrite(imagepathname,image)
+    master.figure.savefig(imagepathname)
+
 

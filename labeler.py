@@ -3,7 +3,7 @@
 import wx
 import wx.grid as gridlib
 import wx.lib.agw.buttonpanel as BP
-from libs.imaging import convert_bw,read_image_as_bitmap
+from libs.imaging import convert_bw,read_image_as_bitmap,write_image
 from libs.utils import check_inside_rect,get_rect_coords
 from libs.grid import write_grid_csv,get_grid_list
 import numpy as np
@@ -69,6 +69,7 @@ class ImageLabeler(wx.App):
         menuAbout = filemenu.Append(wx.ID_ABOUT, "&About", "Information About This Program")
         menuOpen  = filemenu.Append(wx.ID_OPEN,  "&Open",  "Open File")
         menuSaveGrid = filemenu.Append(wx.ID_SAVE,  "&Save Grid",  "Save Coordinates to CSV file")
+        menuSaveImage = filemenu.Append(wx.ID_SAVE,  "&Save Image",  "Save image")
         menuExit  = filemenu.Append(wx.ID_EXIT,  "&Exit",  "Exit Image Labeler")
         
 
@@ -84,6 +85,7 @@ class ImageLabeler(wx.App):
         self.frame.Bind(wx.EVT_MENU, self.OnFileOpen, menuOpen)
         self.frame.Bind(wx.EVT_MENU, self.OnFileExit, menuExit)
         self.frame.Bind(wx.EVT_MENU, self.OnSaveGrid, menuSaveGrid)
+        self.frame.Bind(wx.EVT_MENU, self.OnSaveImage, menuSaveImage)
 
         #Keep track of how many images you have displayed
         self.imagecounter = 0
@@ -234,6 +236,21 @@ class ImageLabeler(wx.App):
             
             # Write to that file
             write_grid_csv(self,pathname)
+
+    def OnSaveImage(self,event):
+        '''
+            Choose filename to save the image.
+        '''
+        with wx.FileDialog(self.frame, "Save an image file",style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
+            if fileDialog.ShowModal() == wx.ID_CANCEL:
+                return     # the user changed their mind
+
+            # Get Pathname
+            imagepathname = fileDialog.GetPath()
+
+            # Write to that file
+            write_image(self,imagepathname)
+
 
 
     def OnFileOpen(self,event):
@@ -427,7 +444,7 @@ class ImageLabeler(wx.App):
         self.set_panels()
 
         # Display the image on the canvas
-        self.axes.imshow(self.current_image) 
+        self.axes.imshow(self.current_image,cmap='gray') 
         self.canvas.draw()
 
     def OnDelete(self):
