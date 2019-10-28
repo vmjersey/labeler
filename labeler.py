@@ -3,9 +3,9 @@
 import wx
 import wx.grid as gridlib
 import wx.lib.agw.buttonpanel as BP
-from libs.imaging import convert_bw
-from libs.imaging import read_image_as_bitmap
-from libs.utils import check_inside_rect
+from libs.imaging import convert_bw,read_image_as_bitmap
+from libs.utils import check_inside_rect,get_rect_coords
+from libs.grid import write_grid_csv,get_grid_list
 import numpy as np
 import os
 import cv2
@@ -105,8 +105,6 @@ class ImageLabeler(wx.App):
     
         # Create Panel for Image Controls.
         self.ControlPanel = wx.Panel(self.frame,style=wx.BORDER_SUNKEN | wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.CAPTION)
-
-        # Set A box sizer and add image inside
         self.ControlBox = wx.BoxSizer(wx.VERTICAL)
         self.ControlBox.Add(self.ControlPanel)
         self.ControlPanel.SetBackgroundColour("red")
@@ -135,11 +133,20 @@ class ImageLabeler(wx.App):
         self.plotbut.Bind(wx.EVT_BUTTON,self.plot)
         self.button_list.append(self.plotbut) 
 
+        # Create Panel for Grid controls
+        self.GridControlPanel = wx.Panel(self.frame,style=wx.BORDER_SUNKEN | wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.CAPTION)
+        self.GridControlBox = wx.BoxSizer(wx.VERTICAL)
+        self.GridControlBox.Add(self.GridControlPanel)
+        self.GridControlPanel.SetBackgroundColour("blue")
+
+        # Create buttons for Grid Control Panel
+        self.grsavebut = wx.Button(self.GridControlPanel,-1,"Save", pos=(20,5))
+        self.grsavebut.Bind(wx.EVT_BUTTON,self.save_grid)
+
+
         # Are we moving the rectangle or creating a new one
         self.is_moving = False
  
-        # Hold list of rectangle coordinates
-        self.rect_list = []
         # Hold list of rectangle objects
         self.rect_obj_list = []
 
@@ -232,8 +239,8 @@ class ImageLabeler(wx.App):
         current_x = event.xdata
         current_y = event.ydata
 
-        for i in range(len(self.rect_list)):
-            rect = self.rect_list[i]
+        for i in range(len(self.rect_obj_list)):
+            rect = self.rect_obj_list[i]
             result = check_inside_rect((current_x,current_y),rect)
             if result == 1:
                 self.selected_rect = i
@@ -242,7 +249,6 @@ class ImageLabeler(wx.App):
 
         # We want to select this rectangle, and move it
         if found > 0:
-            print("Found")
             self.is_moving = True
             self.change_rect_color()
             self.selected_rect_obj = self.rect_obj_list[self.selected_rect]
@@ -277,7 +283,6 @@ class ImageLabeler(wx.App):
 
         if self.is_moving == True:
             if event.xdata is not None and event.ydata is not None: 
-                #print(type(self.selected_rect_obj))
                 if self.press is None: return
                 self.x0, self.y0, xpress, ypress = self.press
                 dx = event.xdata - xpress
@@ -317,9 +322,6 @@ class ImageLabeler(wx.App):
             self.selected_rect_obj.figure.canvas.draw()
             self.is_moving = False
 
-            # Keep List of Bounding Boxes        
-            self.rect_list[self.selected_rect] = [int(x0),int(y0),int(x1),int(y1)]
-
             self.press = None
             
             # Update Grid with new coordinates
@@ -348,9 +350,6 @@ class ImageLabeler(wx.App):
             self.rect.set_xy((self.x0, self.y0))
             self.canvas.draw()
 
-            # Keep List of Bounding Boxes        
-            self.rect_list.append([int(self.x0),int(self.y0),int(self.x1),int(self.y1)])
-
             # Keep list of rect objects
             self.rect_obj_list.append(self.rect)
 
@@ -360,7 +359,7 @@ class ImageLabeler(wx.App):
     def NewImage(self):
 
         # Clear Rectangle List
-        self.rect_list = []
+        self.rect_obj_list = [] 
 
         # Read new image off disk
         self.original_image = cv2.imread(self.imagepath)
@@ -389,7 +388,7 @@ class ImageLabeler(wx.App):
         ''' Delete the selected rectangle'''
         
         # Don't try to delete if empty
-        if len(self.rect_list)<1:
+        if len(self.rect_obj_list)<1:
             print("There is nothing to delete.")
             return 1
         try:
@@ -401,8 +400,6 @@ class ImageLabeler(wx.App):
         rectangle = self.rect_obj_list[self.selected_rect]
         # Remove object from canvas
         rectangle.remove()
-        # Remove cordinates from list
-        self.rect_list.remove(self.rect_list[self.selected_rect])
         # Remove object from list
         self.rect_obj_list.remove(rectangle)
         # Remove coordinates from grid
@@ -438,25 +435,39 @@ class ImageLabeler(wx.App):
     def set_panels(self):
         self.ControlPanel.SetPosition((0,self.image_shape[0]+5))
         self.ControlPanel.SetSize((self.image_shape[1],50))
+
         self.BBPanel.SetPosition((self.image_shape[1]+5,0))
         self.BBPanel.SetSize((525,self.image_shape[0]))
 
+        self.GridControlPanel.SetPosition((self.image_shape[1]+5,self.image_shape[0]+5))
+        self.GridControlPanel.SetSize((525,1000))
+
     def highlight_row(self,rowselect):
 
-        for rownum in range(len(self.rect_list)):
-            row = self.rect_list[rownum]
-            for colnum in range(len(row)):
+        column_labels,grid_list = get_grid_list(self)
+
+        for rownum in range(len(grid_list)):
+            for colnum in range(len(column_labels)):
                 if rownum == rowselect:
                     self.BBGrid.SetCellBackgroundColour(rownum,colnum, "light blue")
                 else:
                     self.BBGrid.SetCellBackgroundColour(rownum,colnum, "white")
 
-
         self.BBGrid.ForceRefresh()
 
+    def save_grid(self,event):
+        write_grid_csv(self)
+
+        
     def fill_grid(self):
-        for rownum in range(len(self.rect_list)):
-            row = self.rect_list[rownum]
+        '''
+            Populate the grid from the list of coordinate found in the Rectangle
+            Objects in rect_obj_list 
+        '''
+
+        coord_list = get_rect_coords(self)
+        for rownum in range(len(coord_list)):
+            row = coord_list[rownum]
             for colnum in range(len(row)):
                 self.BBGrid.SetCellValue(rownum,colnum, str(row[colnum]))
 
