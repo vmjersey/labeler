@@ -3,8 +3,9 @@
 import wx
 import wx.grid as gridlib
 import wx.lib.agw.buttonpanel as BP
-from libs.imaging import convert_bw,read_image_as_bitmap,write_image
+from libs.imaging import convert_bw,convert_gs,read_image_as_bitmap,write_image
 from libs.utils import check_inside_rect,get_rect_coords
+from libs.trans import TransFrame
 from libs.grid import write_grid_csv,get_grid_list
 import numpy as np
 import os
@@ -159,24 +160,8 @@ class ImageLabeler(wx.App):
 
         self.NewImage() 
 
-
-        self.TransFrame = wx.Frame(None, title='Image Tools')
+        self.TransFrame = TransFrame(None,self)
         
-        # Create Panel for Image Transformations Tools
-        self.TransPanel = wx.Panel(self.TransFrame,style=wx.BORDER_SUNKEN | wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.CAPTION)
-        self.TransBox = wx.BoxSizer(wx.VERTICAL)
-        self.TransBox.Add(self.TransPanel)
-        self.TransPanel.SetBackgroundColour("green")
-
-        # Check box to transform image
-        self.bwbox = wx.CheckBox(self.TransPanel, label='Black and White', pos=(20,10))
-        self.bwbox.SetValue(False)
-        self.bwbox.Bind(wx.EVT_CHECKBOX, self.on_bw_check, self.bwbox)
-
-
-        self.TransFrame.Show(True)
-   
-
 
 
 
@@ -560,26 +545,6 @@ class ImageLabeler(wx.App):
             row = coord_list[rownum]
             for colnum in range(len(row)):
                 self.BBGrid.SetCellValue(rownum,colnum, str(row[colnum]))
-
-    def clear_boxes(self):
-        '''
-            Uncheck the boxes
-        '''
-        # Uncheck all the boxes
-        self.bwbox.SetValue(False)
-
-    def on_bw_check(self,e):
-        '''
-            Action taken with box is either checked or unchecked
-        '''
-        # If checked convert to black and white
-        # If uncheck convert back to original image
-        if self.bwbox.GetValue() == True:
-            self.current_image = convert_bw(self.current_image)
-            self.DisplayImage()
-        else:
-            self.current_image = self.original_image
-            self.DisplayImage()
 
 
 app = ImageLabeler()
