@@ -3,14 +3,73 @@ import numpy as np
 import wx
 
 
+
+def gradient_morph(image):
+    '''
+        Apply a gradient morphological transformation on an image
+    '''
+    kernel = np.ones((5,5),np.uint8)
+    gradient = cv2.morphologyEx(image, cv2.MORPH_GRADIENT, kernel)
+    return gradient
+
+def closing_morph(image):
+    '''
+        Apply a closing morphological transformation on an image
+    '''
+    kernel = np.ones((5,5),np.uint8)
+    closing = cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel)
+    return closing
+
+def open_morph(image):
+    '''
+        Apply an open morphological transformation on an image
+    '''
+    kernel = np.ones((5,5),np.uint8)
+    opening = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
+    return opening
+
+def dilation_morph(image):
+    '''
+        Apply a dilation morphological transformation on an image
+    '''
+    kernel = np.ones((5,5),np.uint8)
+    dilation = cv2.dilate(image,kernel,iterations = 1)
+    return dilation
+
+def erosion_morph(image):
+    '''
+        Apply a erosion morphological transformation on an image
+    '''
+    kernel = np.ones((5,5),np.uint8)
+    erosion = cv2.erode(image,kernel,iterations = 1)
+    return erosion
+
+
+def bilateral_filtering(image):
+    '''
+        Apply a bilateral convolutional filter to image
+    '''
+    bilateral = cv2.bilateralFilter(image,9,75,75)
+
+    return bilateral
+
+
+def median_filtering(image):
+    '''
+        Apply a median convolutional filter to image
+    '''
+    median = cv2.medianBlur(image,5)
+
+    return median
+
 def gaussian_filtering(image):
     '''
-        Apply a basic convolutional filter to image
+        Apply a Gaussian convolutional filter to image
     '''
 
-    blur = cv2.GaussianBlur(image,(5,5),0)
+    gaussian = cv2.GaussianBlur(image,(5,5),0)
 
-    return blur
+    return gaussian
 
 
 def average_filtering(image):
