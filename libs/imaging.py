@@ -3,6 +3,34 @@ import numpy as np
 import wx
 
 
+def sobelx_morph(image):
+    '''
+        Apply Sobel Derivative along the X-axis
+    '''
+    sobelx = cv2.Sobel(image,cv2.CV_64F,1,0,ksize=3)
+    sobelx = np.absolute(sobelx)
+    sobelx = np.uint8(sobelx)
+    #sobelx = np.clip(sobelx,0,255)
+    
+    return sobelx
+
+def sobely_morph(image):
+    '''
+        Apply Sobel Derivative along the y-axis
+    '''
+    sobely = cv2.Sobel(image,cv2.CV_64F,0,1,ksize=3)
+    sobely = np.absolute(sobely)
+    sobely = np.uint8(sobely) 
+    return sobely
+
+def laplacian_morph(image):
+    '''
+        Apply a Laplacian Derivative
+    '''
+    laplacian = cv2.Laplacian(image,ddepth=cv2.CV_64F,ksize=3)
+    laplacian = np.absolute(laplacian)
+    laplacian = np.uint8(laplacian)
+    return laplacian
 
 def gradient_morph(image):
     '''
