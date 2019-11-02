@@ -40,6 +40,12 @@ class ImageLabeler(wx.App):
 
         root_dir = os.path.abspath(__file__)       
 
+        self.CanvasPanel = wx.Panel(self.frame,
+                    style=wx.BORDER_SUNKEN | wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.CAPTION)
+        self.CanvasPanel.SetBackgroundColour("dark gray")
+
+        self.frame.Bind(wx.EVT_CLOSE, self.OnFileExit)
+
         # Intitialise the matplotlib figure
         self.figure = Figure()
 
@@ -49,7 +55,7 @@ class ImageLabeler(wx.App):
         self.figure.add_axes(self.axes) 
 
         # Add the figure to the wxFigureCanvas
-        self.canvas = FigureCanvas(self.frame, -1, self.figure)
+        self.canvas = FigureCanvas(self.CanvasPanel, -1, self.figure)
         self.toolbar = NavigationToolbar(self.canvas)
         self.toolbar.Realize()
         self.toolbar.Hide()
@@ -90,14 +96,17 @@ class ImageLabeler(wx.App):
         self.frame.Bind(wx.EVT_MENU, self.OnSaveGrid, menuSaveGrid)
         self.frame.Bind(wx.EVT_MENU, self.OnSaveImage, menuSaveImage)
 
+
+
         #Keep track of how many images you have displayed
         self.imagecounter = 0
 
         self.imagepath = "./image.jpg"
 
         # Create Panel to display Bounding Box Coordinates
-        self.BBPanel = wx.Panel(self.frame,style=wx.BORDER_SUNKEN | wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.CAPTION)
-        self.BBPanel.SetBackgroundColour("red")
+        self.BBPanel = wx.Panel(self.frame,
+                    style=wx.BORDER_SUNKEN | wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.CAPTION)
+        self.BBPanel.SetBackgroundColour("dark gray")
 
         # Create the Grid to Hold the Coordinates
         self.BBGrid = gridlib.Grid(self.BBPanel)
@@ -110,13 +119,24 @@ class ImageLabeler(wx.App):
  
         BBsizer = wx.BoxSizer(wx.VERTICAL)
         BBsizer.Add(self.BBGrid,1,wx.EXPAND|wx.ALL)
+
+        # Do Some things when the mouse clicks inside of the Grid
+        self.BBGrid.Bind(wx.grid.EVT_GRID_SELECT_CELL,self.OnGridLeft)
+        # Do some things when delete key is pressed inside of the grid
+        self.BBGrid.Bind(wx.EVT_KEY_DOWN,self.OnGridDelete)
+        # Get rid of row labels
+        self.BBGrid.SetRowLabelSize(0)
+        self.BBGrid.EnableEditing(False)
+
         self.BBPanel.SetSizer(BBsizer)
 
+
         # Create Panel for Image Controls.
-        self.ControlPanel = wx.Panel(self.frame,style=wx.BORDER_SUNKEN | wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.CAPTION)
+        self.ControlPanel = wx.Panel(self.frame,
+                    style=wx.BORDER_SUNKEN | wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.CAPTION)
         self.ControlBox = wx.BoxSizer(wx.VERTICAL)
         self.ControlBox.Add(self.ControlPanel)
-        self.ControlPanel.SetBackgroundColour("red")
+        self.ControlPanel.SetBackgroundColour("dark gray")
 
         # Create Buttons to help label image
         self.button_list = []
@@ -138,10 +158,11 @@ class ImageLabeler(wx.App):
         self.button_list.append(self.plotbut) 
 
         # Create Panel for Grid controls
-        self.GridControlPanel = wx.Panel(self.frame,style=wx.BORDER_SUNKEN | wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.CAPTION)
+        self.GridControlPanel = wx.Panel(self.frame,
+                    style=wx.BORDER_SUNKEN | wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.CAPTION)
         self.GridControlBox = wx.BoxSizer(wx.VERTICAL)
         self.GridControlBox.Add(self.GridControlPanel)
-        self.GridControlPanel.SetBackgroundColour("blue")
+        self.GridControlPanel.SetBackgroundColour("dark gray")
 
         # Create buttons for Grid Control Panel
         self.grsavebut = wx.Button(self.GridControlPanel,-1,"Save", pos=(20,5))
@@ -163,6 +184,18 @@ class ImageLabeler(wx.App):
         self.TransFrame = TransFrame(None,self)
         
 
+    def OnGridLeft(self,event):
+        row = event.GetRow()
+        self.selected_rect = row
+        self.change_rect_color()
+        self.highlight_row(row)
+
+    def OnGridDelete(self,event):
+        row = self.BBGrid.GetGridCursorRow()
+        col = self.BBGrid.GetGridCursorCol()
+       
+        if event.GetKeyCode() == wx.WXK_DELETE:
+            self.OnDelete()
 
 
     def toggle_cursor_mode(self,button):
@@ -222,7 +255,8 @@ class ImageLabeler(wx.App):
  
     def OnFileExit(self,event):
         print("Exiting...")
-        self.frame.Close()        
+        self.frame.Destroy()
+        self.TransFrame.Close()
 
 
     def OnSaveGrid(self,event):
@@ -501,6 +535,9 @@ class ImageLabeler(wx.App):
         '''
             Set the size and position of the pannels based on the images size.
         '''
+        self.CanvasPanel.SetPosition((0,0)) 
+        self.CanvasPanel.SetSize((self.image_shape[1],self.image_shape[0]))
+
         self.ControlPanel.SetPosition((0,self.image_shape[0]+5))
         self.ControlPanel.SetSize((self.image_shape[1],50))
 

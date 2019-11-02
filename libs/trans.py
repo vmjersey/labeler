@@ -9,7 +9,7 @@ class TransFrame(wx.Frame):
     def __init__(self,thing,parent):
         self.parent = parent
 
-        wx.Frame.__init__(self,thing, title="Image Tools", size=(200,100))
+        wx.Frame.__init__(self,thing, title="Image Tools", size=(200,100),style=wx.DEFAULT_FRAME_STYLE ^ wx.RESIZE_BORDER ^ wx.CLOSE_BOX)
        
          # Create Panel for Image Color Operations
         self.ColorPanel = wx.Panel(self,style=wx.BORDER_SUNKEN | wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.CAPTION)
