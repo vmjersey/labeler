@@ -254,7 +254,6 @@ class ImageLabeler(wx.App):
             self.toolbar.pan() 
  
     def OnFileExit(self,event):
-        print("Exiting...")
         self.frame.Destroy()
         self.TransFrame.Close()
 

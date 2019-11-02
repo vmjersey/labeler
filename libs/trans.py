@@ -15,10 +15,14 @@ class TransFrame(wx.Frame):
         self.ColorPanel = wx.Panel(self,style=wx.BORDER_SUNKEN | wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.CAPTION)
         self.ColorPanel.SetBackgroundColour("dark gray")
 
-        CPTitle= wx.StaticText(self.ColorPanel, -1,style = wx.ALIGN_CENTER)
+        CPTitle= wx.StaticText(self.ColorPanel, -1,)
         font = wx.Font(18, wx.DECORATIVE, wx.ITALIC, wx.NORMAL)
         CPTitle.SetFont(font)
         CPTitle.SetLabel("Color Options")
+       
+        CPsizer = wx.GridSizer(1, 1, 5, 5)
+        CPsizer.Add(CPTitle, 0, wx.ALL |wx.CENTRE | wx.ALIGN_CENTER_HORIZONTAL)
+        self.ColorPanel.SetSizer(CPsizer)
 
 
 
@@ -41,9 +45,12 @@ class TransFrame(wx.Frame):
         self.ExtractionPanel.SetBackgroundColour("dark gray")
 
         EPTitle= wx.StaticText(self.ExtractionPanel, -1,style = wx.ALIGN_CENTER)
-        font = wx.Font(18, wx.DECORATIVE, wx.ITALIC, wx.NORMAL)
         EPTitle.SetFont(font)
         EPTitle.SetLabel("Extraction")
+
+        EPsizer = wx.GridSizer(1, 1, 5, 5)
+        EPsizer.Add(EPTitle, 0, wx.ALL |wx.CENTRE | wx.ALIGN_CENTER_HORIZONTAL)
+        self.ExtractionPanel.SetSizer(EPsizer)
 
 
         # Checkbox to extract foreground
@@ -65,7 +72,11 @@ class TransFrame(wx.Frame):
         self.BlurPanel.SetBackgroundColour("dark gray")
 
         BPTitle= wx.StaticText(self.BlurPanel, -1,style = wx.ALIGN_CENTER)
-        font = wx.Font(18, wx.DECORATIVE, wx.ITALIC, wx.NORMAL)
+        BPsizer = wx.GridSizer(1, 1, 5, 5)
+        BPsizer.Add(BPTitle, 0, wx.ALL |wx.CENTRE | wx.ALIGN_CENTER_HORIZONTAL)
+        self.BlurPanel.SetSizer(BPsizer)
+
+
         BPTitle.SetFont(font)
         BPTitle.SetLabel("Filtering")
 
@@ -95,14 +106,19 @@ class TransFrame(wx.Frame):
         self.BlurPanel.SetPosition((205,205)) 
 
 
-        # Create Panel for Morphological operations
+        # Create panel for morphological operations
         self.MorphPanel = wx.Panel(self,style=wx.BORDER_SUNKEN | wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.CAPTION)
         self.MorphPanel.SetBackgroundColour("dark gray")
-        
-        MorphTitle= wx.StaticText(self.MorphPanel, -1,style = wx.ALIGN_CENTER)
-        font = wx.Font(18, wx.DECORATIVE, wx.ITALIC, wx.NORMAL)
-        MorphTitle.SetFont(font)
-        MorphTitle.SetLabel("Transformations")
+       
+        #Set title in center 
+        MPTitle= wx.StaticText(self.MorphPanel, -1,style = wx.ALIGN_CENTER)
+        MPsizer = wx.GridSizer(1, 1, 5, 5)
+        MPsizer.Add(MPTitle, 0, wx.ALL |wx.CENTRE | wx.ALIGN_CENTER_HORIZONTAL)
+        self.MorphPanel.SetSizer(MPsizer)
+
+
+        MPTitle.SetFont(font)
+        MPTitle.SetLabel("Transformations")
 
         # Checkbox for Erosion Morphology
         self.embox = wx.CheckBox(self.MorphPanel, label='Erosion', pos=(20,20))

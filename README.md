@@ -11,7 +11,6 @@ Wishlist:
 
 Bugs:
 
-   * There seems to be a small slowdown when the image tools are used.
 
 
 
