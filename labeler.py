@@ -186,9 +186,15 @@ class ImageLabeler(wx.App):
         self.GridControlBox.Add(self.GridControlPanel)
         self.GridControlPanel.SetBackgroundColour("dark gray")
 
+        GridControlSizer = wx.GridSizer(1,4,1,1)
+
         # Create buttons for Grid Control Panel
-        self.grsavebut = wx.Button(self.GridControlPanel,-1,"Save", pos=(20,5))
+        self.grsavebut = wx.Button(self.GridControlPanel,-1, pos=(20,5))
+        save_img = wx.Image(root_dir + '/icons/filesave.png', wx.BITMAP_TYPE_ANY)
+        save_img = save_img.Scale(20,20)
+        self.grsavebut.SetBitmap(wx.Bitmap(save_img))
         self.grsavebut.Bind(wx.EVT_BUTTON,self.save_grid)
+        GridControlSizer.Add(self.grsavebut,0,wx.ALL |wx.CENTRE | wx.ALIGN_CENTER_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL)
 
 
         # Are we moving the rectangle or creating a new one
@@ -207,12 +213,18 @@ class ImageLabeler(wx.App):
         
 
     def OnGridLeft(self,event):
+        '''
+            Action taken when left click happens on grid
+        '''
         row = event.GetRow()
         self.selected_rect = row
         self.change_rect_color()
         self.highlight_row(row)
 
     def OnGridDelete(self,event):
+        '''
+            Delete row in column
+        '''
         row = self.BBGrid.GetGridCursorRow()
         col = self.BBGrid.GetGridCursorCol()
        
@@ -276,6 +288,9 @@ class ImageLabeler(wx.App):
             self.toolbar.pan() 
  
     def OnFileExit(self,event):
+        '''
+            Close every frame in the app.
+        '''
         self.frame.Destroy()
         self.TransFrame.Close()
 
@@ -309,6 +324,9 @@ class ImageLabeler(wx.App):
             write_image(self,imagepathname)
 
     def OnFileOpen(self,event):
+        ''' 
+            Open Dialog so user can select a new image. 
+        '''
         # Get the file path you wan to open.
         with wx.FileDialog(self.frame, "Open Image File", 
             wildcard="Image Files *.png|*.jpg", 
@@ -324,12 +342,18 @@ class ImageLabeler(wx.App):
             self.NewImage()
 
     def OnFileAbout(self,event):
+        '''
+            Display information about the application
+        '''
         # A message dialog box with an OK button. wx.OK is a standard ID in wxWidgets.
         dlg = wx.MessageDialog( self.frame, "A GUI for labeling images", "About Image Labeler", wx.OK)
         dlg.ShowModal()
         dlg.Destroy()
 
     def OnKeyDown(self,event):
+        '''
+            Actions to be taken when a key is pressed
+        '''
         if event.key == 'delete':
             self.OnDelete()
 

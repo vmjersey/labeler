@@ -2,7 +2,8 @@
 
 def check_inside_rect(coord,rect):
 
-    ''' Check to is if a coordinate (x,y) is inside of
+    ''' 
+        Check to is if a coordinate (x,y) is inside of
         rectangle ((x1,y1)(x2,y2)).
         rect : matplotlib.patches.Rectangle Object
         coord : (int,int) representing (x,y)
