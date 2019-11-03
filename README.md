@@ -9,7 +9,6 @@ Wishlist:
    * Ability to read in labels and coordinates from a CSV file
 
 Bugs:
-   * Allow user to edit labels column
 
 
 

@@ -77,7 +77,7 @@ class ImageLabeler(wx.App):
         menuAbout = filemenu.Append(wx.ID_ABOUT, "&About", "Information About This Program")
         menuOpen  = filemenu.Append(wx.ID_OPEN,  "&Open",  "Open File")
         menuSaveGrid = filemenu.Append(wx.ID_SAVE,  "&Save Grid",  "Save Coordinates to CSV file")
-        menuSaveImage = filemenu.Append(wx.ID_SAVE,  "&Save Image",  "Save image")
+        menuSaveImage = filemenu.Append(wx.ID_SAVEAS,  "&Save Image",  "Save image")
         menuExit  = filemenu.Append(wx.ID_EXIT,  "&Exit",  "Exit Image Labeler")
         
 
