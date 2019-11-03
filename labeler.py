@@ -125,7 +125,9 @@ class ImageLabeler(wx.App):
         self.BBGrid.Bind(wx.EVT_KEY_DOWN,self.OnGridDelete)
         # Get rid of row labels
         self.BBGrid.SetRowLabelSize(0)
-        self.BBGrid.EnableEditing(False)
+        # Set all columns to read only, except the Label column
+        self.set_grid_edit()
+        #self.BBGrid.EnableEditing(False)
 
         self.BBPanel.SetSizer(BBsizer)
 
@@ -211,6 +213,13 @@ class ImageLabeler(wx.App):
 
         self.TransFrame = TransFrame(None,self)
         
+    def set_grid_edit(self):
+        for col in range(self.BBGrid.GetNumberCols()):
+            for row in range(self.BBGrid.GetNumberRows()):
+                if col == 4:
+                    self.BBGrid.SetReadOnly(row, col, False)
+                else:
+                    self.BBGrid.SetReadOnly(row, col, True)
 
     def OnGridLeft(self,event):
         '''
@@ -560,6 +569,9 @@ class ImageLabeler(wx.App):
             change the line color of currently selected rectangle
         '''
         # Set selected rectangle line color black
+        if len(self.rect_obj_list) < 1:
+            return 0
+        
         rect = self.rect_obj_list[self.selected_rect]
 
         #set everything back to green
