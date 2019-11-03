@@ -38,8 +38,7 @@ class ImageLabeler(wx.App):
         self.frame = wx.Frame(None, title='Image Display')
 
 
-        root_dir = os.path.abspath(__file__)       
-
+        root_dir = os.path.dirname(os.path.abspath(__file__))
         self.CanvasPanel = wx.Panel(self.frame,
                     style=wx.BORDER_SUNKEN | wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.CAPTION)
         self.CanvasPanel.SetBackgroundColour("dark gray")
@@ -141,21 +140,44 @@ class ImageLabeler(wx.App):
         # Create Buttons to help label image
         self.button_list = []
 
-        self.sibut = wx.Button(self.ControlPanel,-1,"Zoom", pos=(400,5))
+        ControlSizer = wx.GridSizer(1,4,1,1)
+
+        self.sibut = wx.Button(self.ControlPanel,-1)
+        zoom_img = wx.Image(root_dir + '/icons/zoom.png', wx.BITMAP_TYPE_ANY)
+        zoom_img = zoom_img.Scale(20,20)
+        self.sibut.SetBitmap(wx.Bitmap(zoom_img))
         self.sibut.Bind(wx.EVT_BUTTON,self.zoom)
         self.button_list.append(self.sibut)
+        ControlSizer.Add(self.sibut,0,wx.ALL |wx.CENTRE | wx.ALIGN_CENTER_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL)
+
          
-        self.hmbut = wx.Button(self.ControlPanel,-1,"Home", pos=(300,5))
+        self.hmbut = wx.Button(self.ControlPanel,-1)
+        home_img = wx.Image(root_dir + '/icons/home.png', wx.BITMAP_TYPE_ANY)
+        home_img = home_img.Scale(20,20)
+        self.hmbut.SetBitmap(wx.Bitmap(home_img))
         self.hmbut.Bind(wx.EVT_BUTTON,self.home)
         self.button_list.append(self.hmbut)
-         
-        self.hibut = wx.Button(self.ControlPanel,-1,"Pan",  pos=(200,5))
+        ControlSizer.Add(self.hmbut,0,wx.ALL |wx.CENTRE | wx.ALIGN_CENTER_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL) 
+
+ 
+        self.hibut = wx.Button(self.ControlPanel,-1)
+        pan_img = wx.Image(root_dir + '/icons/pan.png', wx.BITMAP_TYPE_ANY)
+        pan_img = pan_img.Scale(20,20)
+        self.hibut.SetBitmap(wx.Bitmap(pan_img))
         self.hibut.Bind(wx.EVT_BUTTON,self.pan)
         self.button_list.append(self.hibut)
+        ControlSizer.Add(self.hibut,0,wx.ALL |wx.CENTRE | wx.ALIGN_CENTER_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL) 
 
-        self.plotbut = wx.Button(self.ControlPanel,-1,"Plot", pos=(500,5))
+
+        self.plotbut = wx.Button(self.ControlPanel,-1)
+        box_img = wx.Image(root_dir + '/icons/bbox.png', wx.BITMAP_TYPE_ANY)
+        box_img = box_img.Scale(20,20)
+        self.plotbut.SetBitmap(wx.Bitmap(box_img))
         self.plotbut.Bind(wx.EVT_BUTTON,self.plot)
         self.button_list.append(self.plotbut) 
+        ControlSizer.Add(self.plotbut,0,wx.ALL |wx.CENTRE | wx.ALIGN_CENTER_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL)
+
+        self.ControlPanel.SetSizer(ControlSizer) 
 
         # Create Panel for Grid controls
         self.GridControlPanel = wx.Panel(self.frame,
