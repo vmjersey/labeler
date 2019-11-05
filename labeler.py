@@ -6,7 +6,7 @@ import wx.lib.agw.buttonpanel as BP
 from libs.imaging import convert_bw,convert_gs,read_image_as_bitmap,write_image
 from libs.utils import check_inside_rect,get_rect_coords
 from libs.trans import TransFrame
-from libs.grid import write_grid_csv,get_grid_list
+from libs.grid import write_grid_csv,get_grid_list,import_grid_csv
 import numpy as np
 import os
 import cv2
@@ -75,9 +75,10 @@ class ImageLabeler(wx.App):
         # Setting up the menu.
         filemenu  = wx.Menu()
         menuAbout = filemenu.Append(wx.ID_ABOUT, "&About", "Information About This Program")
-        menuOpen  = filemenu.Append(wx.ID_OPEN,  "&Open",  "Open File")
-        menuSaveGrid = filemenu.Append(wx.ID_SAVE,  "&Save Grid",  "Save Coordinates to CSV file")
-        menuSaveImage = filemenu.Append(wx.ID_SAVEAS,  "&Save Image",  "Save image")
+        menuOpenGrid  = filemenu.Append(wx.ID_OPEN,  "&Open Grid",  "Open File Containing Bounding Boxes")
+        menuOpenImage  = filemenu.Append(wx.ID_OPEN,  "&Open Image",  "Open Image File")
+        menuSaveGrid = filemenu.Append(wx.ID_SAVE,  "&Save Grid",  "Save Bounding Boxes to CSV File")
+        menuSaveImage = filemenu.Append(wx.ID_SAVEAS,  "&Save Image",  "Save Image")
         menuExit  = filemenu.Append(wx.ID_EXIT,  "&Exit",  "Exit Image Labeler")
         
 
@@ -90,7 +91,8 @@ class ImageLabeler(wx.App):
 
         # Set events.
         self.frame.Bind(wx.EVT_MENU, self.OnFileAbout, menuAbout)
-        self.frame.Bind(wx.EVT_MENU, self.OnFileOpen, menuOpen)
+        self.frame.Bind(wx.EVT_MENU, self.OnFileOpen, menuOpenImage)
+        self.frame.Bind(wx.EVT_MENU, self.OnImportGrid, menuOpenGrid)
         self.frame.Bind(wx.EVT_MENU, self.OnFileExit, menuExit)
         self.frame.Bind(wx.EVT_MENU, self.OnSaveGrid, menuSaveGrid)
         self.frame.Bind(wx.EVT_MENU, self.OnSaveImage, menuSaveImage)
@@ -191,12 +193,23 @@ class ImageLabeler(wx.App):
         GridControlSizer = wx.GridSizer(1,4,1,1)
 
         # Create buttons for Grid Control Panel
-        self.grsavebut = wx.Button(self.GridControlPanel,-1, pos=(20,5))
+        self.imbut = wx.Button(self.GridControlPanel,-1)
+        imp_img = wx.Image(root_dir + '/icons/import.png', wx.BITMAP_TYPE_ANY)
+        imp_img = imp_img.Scale(20,20)
+        self.imbut.SetBitmap(wx.Bitmap(imp_img))
+        self.imbut.Bind(wx.EVT_BUTTON,self.OnImportGrid)
+        GridControlSizer.Add(self.imbut,0,wx.ALL |wx.CENTRE | wx.ALIGN_CENTER_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL)
+
+
+        # Create buttons for Grid Control Panel
+        self.grsavebut = wx.Button(self.GridControlPanel,-1)
         save_img = wx.Image(root_dir + '/icons/filesave.png', wx.BITMAP_TYPE_ANY)
         save_img = save_img.Scale(20,20)
         self.grsavebut.SetBitmap(wx.Bitmap(save_img))
         self.grsavebut.Bind(wx.EVT_BUTTON,self.save_grid)
         GridControlSizer.Add(self.grsavebut,0,wx.ALL |wx.CENTRE | wx.ALIGN_CENTER_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL)
+
+        self.GridControlPanel.SetSizer(GridControlSizer)
 
 
         # Are we moving the rectangle or creating a new one
@@ -303,12 +316,45 @@ class ImageLabeler(wx.App):
         self.frame.Destroy()
         self.TransFrame.Close()
 
+    def OnImportGrid(self,event):
+        '''
+            Choose CSV file with coordinates to import.
+        '''
+        with wx.FileDialog(self.frame, "Import CSV File", wildcard="*.csv",style=wx.FD_OPEN) as fileDialog:
+            if fileDialog.ShowModal() == wx.ID_CANCEL:
+                return     # the user changed their mind
+
+            # Get Pathname
+            pathname = fileDialog.GetPath()
+
+            # Read file into list
+            new_coords = import_grid_csv(self,pathname)
+            
+            # Loop through coordinates and draw rectangle
+            for coord in new_coords:
+                x0,y0,x1,y1,label = coord
+                x0 = int(x0)
+                y0 = int(y0)
+                x1 = int(x1)
+                y1 = int(y1)
+                width = int(x1)-int(x0)
+                height = int(y1)-int(y0)
+
+                print(width,height)
+                self.rect = Rectangle((int(x0),int(y0)), width, height, facecolor='None', edgecolor='green',linewidth='2')
+                self.axes.add_patch(self.rect)
+                self.rect_obj_list.append(self.rect)
+
+            self.canvas.draw()
+
+
+
 
     def OnSaveGrid(self,event):
         '''
             Choose filename to save a CSV with grid with the coordinates.
         '''
-        with wx.FileDialog(self.frame, "Save CSV file", wildcard="CSV files (*.csv)",style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
+        with wx.FileDialog(self.frame, "Save CSV file", wildcard="*.csv",style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
             if fileDialog.ShowModal() == wx.ID_CANCEL:
                 return     # the user changed their mind
 
@@ -542,12 +588,13 @@ class ImageLabeler(wx.App):
         
         # Don't try to delete if empty
         if len(self.rect_obj_list)<1:
-            print("There is nothing to delete.")
+            self.user_error("There is nothing to delete.") 
             return 1
+        
         try:
             self.selected_rect
         except:
-            print("You haven't selected a rectangle yet.")
+            self.user_error("You haven't selected a rectangle yet.") 
             return 1 
 
         rectangle = self.rect_obj_list[self.selected_rect]
@@ -625,9 +672,19 @@ class ImageLabeler(wx.App):
         '''
             Save the selected bounding boxes to some file, database,etc 
         '''
-        write_grid_csv(self)
+        if len(self.rect_obj_list) < 1:
+            self.user_error("You haven't selected a single bounding box yet.")
+            return 1;
+        else:
+            write_grid_csv(self)
+            return 0
 
-        
+    def user_info(self,message):
+        wx.MessageBox(message,'Info', wx.OK)
+
+    def user_error(self,message):
+        wx.MessageBox(message, 'Error', wx.ICON_ERROR | wx.OK)
+ 
     def fill_grid(self):
         '''
             Populate the grid from the list of coordinate found in the Rectangle

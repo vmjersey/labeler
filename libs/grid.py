@@ -2,6 +2,34 @@ import csv
 import os
 
 
+
+def import_grid_csv(master,pathname):
+    '''
+        Fill grid with bounding boxes from csv file
+    '''
+    
+    lines = []     
+
+    with open(pathname) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        rownum=0
+        for row in csv_reader:
+            # Don't read in header
+            if rownum == 0:
+                next
+            else:
+                for colnum in range(len(row)):
+                    master.BBGrid.SetCellValue(rownum-1, colnum,row[colnum])
+                
+                lines.append(row)
+            
+            rownum+=1
+   
+    return lines     
+
+
+ 
+
 def get_grid_list(master):
     '''
         Ouputs the grid as a python list
@@ -49,5 +77,5 @@ def write_grid_csv(master,default_csvfile=''):
         for coords in grid_list:
             wr.writerow(coords)
 
-
+    master.user_info("Grid saved as " + default_csvfile)
 
