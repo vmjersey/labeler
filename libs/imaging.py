@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import wx
-
+from scipy.ndimage import label
 
 def sobelx_morph(image):
     '''
@@ -180,6 +180,67 @@ def convert_bw(image):
     #(thresh, bw_image) = cv2.threshold(gray_image, 100, 255, cv2.THRESH_BINARY)
     
     return bw_image
+
+def convert_canny(master,image):
+    '''
+        Run Canny on an image
+    '''
+    # If something is already a grayscale, probably need to convert 
+    # back to original
+    if len(image.shape) < 3:
+        image = master.original_image.copy()
+
+    canny_image = cv2.Canny(image,150,200)
+    
+    return canny_image
+
+def convert_watershed(master,image):
+    '''
+        Run watershed on an image
+    '''
+
+
+    orig_image = image.copy() 
+    # If something is not grayscale, need to convert it
+    if len(image.shape) > 2:
+        orig_image = image.copy()
+        image = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
+    else:
+        orig_image = cv2.cvtColor(image,cv2.COLOR_GRAY2BGR)
+    
+    
+    _, img_bin = cv2.threshold(image, 0, 255,cv2.THRESH_OTSU)
+    img_bin = cv2.morphologyEx(img_bin, cv2.MORPH_OPEN,np.ones((3, 3), dtype=int))
+    border = cv2.dilate(img_bin, None, iterations=5)
+    border = border - cv2.erode(border, None)
+
+    dt = cv2.distanceTransform(img_bin, 2, 3)
+    dt = ((dt - dt.min()) / (dt.max() - dt.min()) * 255).astype(np.uint8)
+    _, dt = cv2.threshold(dt, 80, 255, cv2.THRESH_BINARY)
+    lbl, ncc = label(dt)
+    lbl = lbl * (255 / (ncc + 1))
+    # Completing the markers now. 
+    lbl[border == 255] = 255
+
+    lbl = lbl.astype(np.int32)
+
+    image = cv2.normalize(orig_image, None, 255,0, cv2.NORM_MINMAX, cv2.CV_8UC1)
+    cv2.watershed(image, lbl)
+
+    lbl[lbl == -1] = 0
+    lbl = lbl.astype(np.uint8)
+
+    result = 255 - lbl
+
+    result[result != 255] = 0
+    result = cv2.dilate(result, None)
+    image[result == 255] = (0, 0, 255)
+    
+    return image
+
+
+
+
 
 def read_image_as_bitmap(filepath):
     '''

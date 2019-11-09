@@ -75,7 +75,7 @@ class ImageLabeler(wx.App):
         # Setting up the menu.
         filemenu  = wx.Menu()
         menuAbout = filemenu.Append(wx.ID_ABOUT, "&About", "Information About This Program")
-        menuOpenGrid  = filemenu.Append(wx.ID_OPEN,  "&Open Grid",  "Open File Containing Bounding Boxes")
+        menuOpenGrid  = filemenu.Append(wx.ID_FILE,  "&Open Grid",  "Open File Containing Bounding Boxes")
         menuOpenImage  = filemenu.Append(wx.ID_OPEN,  "&Open Image",  "Open Image File")
         menuSaveGrid = filemenu.Append(wx.ID_SAVE,  "&Save Grid",  "Save Bounding Boxes to CSV File")
         menuSaveImage = filemenu.Append(wx.ID_SAVEAS,  "&Save Image",  "Save Image")

@@ -1,5 +1,5 @@
 import wx
-from libs.imaging import convert_bw,convert_gs,extract_fg,extract_bg,average_filtering,gaussian_filtering,median_filtering,bilateral_filtering,erosion_morph,dilation_morph,open_morph,closing_morph,gradient_morph,laplacian_morph,sobelx_morph,sobely_morph
+from libs.imaging import convert_bw,convert_gs,extract_fg,extract_bg,average_filtering,gaussian_filtering,median_filtering,bilateral_filtering,erosion_morph,dilation_morph,open_morph,closing_morph,gradient_morph,laplacian_morph,sobelx_morph,sobely_morph,convert_canny,convert_watershed
 
 
 class TransFrame(wx.Frame):
@@ -35,7 +35,8 @@ class TransFrame(wx.Frame):
         self.bwbox = wx.CheckBox(self.ColorPanel, label='Black and White', pos=(20,40))
         self.bwbox.SetValue(False)
         self.bwbox.Bind(wx.EVT_CHECKBOX, self.on_bw_check, self.bwbox)
-
+        
+        
         self.ColorPanel.SetSize(200,200)
         self.ColorPanel.SetPosition((5,5))
 
@@ -62,6 +63,19 @@ class TransFrame(wx.Frame):
         self.bgbox = wx.CheckBox(self.ExtractionPanel, label='Extract Background', pos=(20,40))
         self.bgbox.SetValue(False)
         self.bgbox.Bind(wx.EVT_CHECKBOX, self.on_bg_check, self.bgbox)
+
+        # Checkbox to convert image to canny
+        self.cbox = wx.CheckBox(self.ExtractionPanel, label='Canny', pos=(20,60))
+        self.cbox.SetValue(False)
+        self.cbox.Bind(wx.EVT_CHECKBOX, self.on_c_check, self.cbox)
+
+        # Checkbox to convert image to canny
+        self.wsbox = wx.CheckBox(self.ExtractionPanel, label='Watershed', pos=(20,80))
+        self.wsbox.SetValue(False)
+        self.wsbox.Bind(wx.EVT_CHECKBOX, self.on_ws_check, self.wsbox)
+
+
+
 
         self.ExtractionPanel.SetSize(200,200)
         self.ExtractionPanel.SetPosition((205,5))
@@ -176,6 +190,8 @@ class TransFrame(wx.Frame):
         # Uncheck all the boxes
         self.bwbox.SetValue(False)
         self.gsbox.SetValue(False)
+        self.cbox.SetValue(False)
+        self.wsbox.SetValue(False)
         self.fgbox.SetValue(False)
         self.bgbox.SetValue(False)
         self.afbox.SetValue(False)
@@ -404,6 +420,34 @@ class TransFrame(wx.Frame):
         # If uncheck convert back to original image
         if self.bwbox.GetValue() == True:
             self.parent.current_image = convert_bw(self.parent.current_image)
+            # You're going to want to uncheck gsbox too
+            #self.gsbox.SetValue(False)
+            self.parent.DisplayImage()
+        else:
+            self.reset_boxes()
+
+    def on_c_check(self,e):
+        '''
+            Action taken with box is either checked or unchecked
+        '''
+        # If checked convert to black and white
+        # If uncheck convert back to original image
+        if self.cbox.GetValue() == True:
+            self.parent.current_image = convert_canny(self.parent,self.parent.current_image)
+            # You're going to want to uncheck gsbox too
+            #self.gsbox.SetValue(False)
+            self.parent.DisplayImage()
+        else:
+            self.reset_boxes()
+
+    def on_ws_check(self,e):
+        '''
+            Action taken with box is either checked or unchecked
+        '''
+        # If checked convert to black and white
+        # If uncheck convert back to original image
+        if self.wsbox.GetValue() == True:
+            self.parent.current_image = convert_watershed(self.parent,self.parent.current_image)
             # You're going to want to uncheck gsbox too
             #self.gsbox.SetValue(False)
             self.parent.DisplayImage()
