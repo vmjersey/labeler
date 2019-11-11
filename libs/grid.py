@@ -1,34 +1,46 @@
 import csv
 import os
+from libs.utils import get_rect_coords
 
 
 
 def import_grid_csv(master,pathname):
     '''
-        Fill grid with bounding boxes from csv file
+        Read csv file
     '''
     
     lines = []     
 
     with open(pathname) as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
+
         rownum=0
         for row in csv_reader:
             # Don't read in header
             if rownum == 0:
+                rownum+=1
                 next
             else:
-                for colnum in range(len(row)):
-                    master.BBGrid.SetCellValue(rownum-1, colnum,row[colnum])
-                
                 lines.append(row)
-            
             rownum+=1
-   
+            
+    fill_grid(master)  
+
     return lines     
 
 
- 
+def fill_grid(master):
+    '''
+        Populate the grid from the list of coordinate found in the Rectangle
+        objects in rect_obj_list 
+    '''
+
+    coord_list = get_rect_coords(master)
+    for rownum in range(len(coord_list)):
+        row = coord_list[rownum]
+        for colnum in range(len(row)):
+            master.BBGrid.SetCellValue(rownum,colnum, str(row[colnum]))
+
 
 def get_grid_list(master):
     '''
@@ -78,4 +90,36 @@ def write_grid_csv(master,default_csvfile=''):
             wr.writerow(coords)
 
     master.user_info("Grid saved as " + default_csvfile)
+
+
+
+def set_grid_edit(master):
+    '''
+        Make it so that only certain columns can be edited
+    '''
+    for col in range(master.BBGrid.GetNumberCols()):
+        for row in range(master.BBGrid.GetNumberRows()):
+            if col == 4:
+                master.BBGrid.SetReadOnly(row, col, False)
+            else:
+                master.BBGrid.SetReadOnly(row, col, True)
+
+
+def highlight_row(master,rowselect):
+    '''
+        Highlight the row in the Grid of the selected rectangle
+    '''
+
+    column_labels,grid_list = get_grid_list(master)
+
+    for rownum in range(len(grid_list)):
+        for colnum in range(len(column_labels)):
+            if rownum == rowselect:
+                master.BBGrid.SetCellBackgroundColour(rownum,colnum, "light blue")
+            else:
+                master.BBGrid.SetCellBackgroundColour(rownum,colnum, "white")
+
+    master.BBGrid.ForceRefresh()
+
+
 

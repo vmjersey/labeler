@@ -4,9 +4,10 @@ import wx
 import wx.grid as gridlib
 import wx.lib.agw.buttonpanel as BP
 from libs.imaging import convert_bw,convert_gs,read_image_as_bitmap,write_image
-from libs.utils import check_inside_rect,get_rect_coords
+from libs.utils import check_inside_rect
 from libs.trans import TransFrame
-from libs.grid import write_grid_csv,get_grid_list,import_grid_csv
+from libs.segment import SegmentFrame
+from libs.grid import write_grid_csv,get_grid_list,import_grid_csv,fill_grid,set_grid_edit,highlight_row
 import numpy as np
 import os
 import cv2
@@ -128,7 +129,7 @@ class ImageLabeler(wx.App):
         # Get rid of row labels
         self.BBGrid.SetRowLabelSize(0)
         # Set all columns to read only, except the Label column
-        self.set_grid_edit()
+        set_grid_edit(self)
         #self.BBGrid.EnableEditing(False)
 
         self.BBPanel.SetSizer(BBsizer)
@@ -224,15 +225,13 @@ class ImageLabeler(wx.App):
 
         self.NewImage() 
 
+        # Frame for image transformations
         self.TransFrame = TransFrame(None,self)
         
-    def set_grid_edit(self):
-        for col in range(self.BBGrid.GetNumberCols()):
-            for row in range(self.BBGrid.GetNumberRows()):
-                if col == 4:
-                    self.BBGrid.SetReadOnly(row, col, False)
-                else:
-                    self.BBGrid.SetReadOnly(row, col, True)
+        # Frame for image segmentation
+        self.SegFrame = SegmentFrame(None,self)
+
+
 
     def OnGridLeft(self,event):
         '''
@@ -241,7 +240,7 @@ class ImageLabeler(wx.App):
         row = event.GetRow()
         self.selected_rect = row
         self.change_rect_color()
-        self.highlight_row(row)
+        highlight_row(self,row)
 
     def OnGridDelete(self,event):
         '''
@@ -315,6 +314,7 @@ class ImageLabeler(wx.App):
         '''
         self.frame.Destroy()
         self.TransFrame.Close()
+        self.SegFrame.Close()
 
     def OnImportGrid(self,event):
         '''
@@ -332,21 +332,26 @@ class ImageLabeler(wx.App):
             
             # Loop through coordinates and draw rectangle
             for coord in new_coords:
-                x0,y0,x1,y1,label = coord
-                x0 = int(x0)
-                y0 = int(y0)
-                x1 = int(x1)
-                y1 = int(y1)
-                width = int(x1)-int(x0)
-                height = int(y1)-int(y0)
-
-                print(width,height)
-                self.rect = Rectangle((int(x0),int(y0)), width, height, facecolor='None', edgecolor='green',linewidth='2')
-                self.axes.add_patch(self.rect)
-                self.rect_obj_list.append(self.rect)
+                self.draw_rect(coord)
 
             self.canvas.draw()
 
+    def draw_rect(self,rect):
+        if len(rect) > 4:
+            x0,y0,x1,y1,label = rect
+        else:
+            x0,y0,x1,y1 = rect
+
+        x0 = int(x0)
+        y0 = int(y0)
+        x1 = int(x1)
+        y1 = int(y1)
+        width = int(x1)-int(x0)
+        height = int(y1)-int(y0)
+
+        self.rect = Rectangle((int(x0),int(y0)), width, height, facecolor='None', edgecolor='green',linewidth='2')
+        self.axes.add_patch(self.rect)
+        self.rect_obj_list.append(self.rect)
 
 
 
@@ -516,7 +521,7 @@ class ImageLabeler(wx.App):
             self.press = None
             
             # Update Grid with new coordinates
-            self.fill_grid()
+            fill_grid(self)
             return 0
         # A new rectangle is finished being drawn
         elif self.frame.pressed:
@@ -546,7 +551,7 @@ class ImageLabeler(wx.App):
             self.rect_obj_list.append(self.rect)
 
             # Fill the grid with the bounding boxes
-            self.fill_grid()
+            fill_grid(self)
  
     def NewImage(self):
         '''
@@ -631,7 +636,7 @@ class ImageLabeler(wx.App):
                 rect.set_edgecolor('green')
             
         # Also highlight row in grid
-        self.highlight_row(self.selected_rect)
+        highlight_row(self,self.selected_rect)
         
         self.canvas.draw()
 
@@ -652,22 +657,6 @@ class ImageLabeler(wx.App):
         self.GridControlPanel.SetSize((525,50))
 
 
-    def highlight_row(self,rowselect):
-        '''
-            Highlight the row in the Grid of the selected rectangle
-        '''
-
-        column_labels,grid_list = get_grid_list(self)
-
-        for rownum in range(len(grid_list)):
-            for colnum in range(len(column_labels)):
-                if rownum == rowselect:
-                    self.BBGrid.SetCellBackgroundColour(rownum,colnum, "light blue")
-                else:
-                    self.BBGrid.SetCellBackgroundColour(rownum,colnum, "white")
-
-        self.BBGrid.ForceRefresh()
-
     def save_grid(self,event):
         '''
             Save the selected bounding boxes to some file, database,etc 
@@ -685,19 +674,6 @@ class ImageLabeler(wx.App):
     def user_error(self,message):
         wx.MessageBox(message, 'Error', wx.ICON_ERROR | wx.OK)
  
-    def fill_grid(self):
-        '''
-            Populate the grid from the list of coordinate found in the Rectangle
-            objects in rect_obj_list 
-        '''
-
-        coord_list = get_rect_coords(self)
-        for rownum in range(len(coord_list)):
-            row = coord_list[rownum]
-            for colnum in range(len(row)):
-                self.BBGrid.SetCellValue(rownum,colnum, str(row[colnum]))
-
-
 app = ImageLabeler()
 app.MainLoop()
 

@@ -3,6 +3,26 @@ import numpy as np
 import wx
 from scipy.ndimage import label
 
+
+
+
+def find_contours(master,image):
+
+    canny_output = convert_canny(master,image)
+
+    contours, hierarchy = cv2.findContours(canny_output, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+    rects = []
+    for contour in contours:
+        area = cv2.contourArea(contour)
+        # Don't want tiny rectangles
+        if area > 50:
+            rect = cv2.boundingRect(contour) 
+            rects.append(rect)
+
+    return rects
+
+
 def sobelx_morph(image):
     '''
         Apply Sobel Derivative along the X-axis
