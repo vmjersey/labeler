@@ -7,7 +7,7 @@ from libs.imaging import convert_bw,convert_gs,read_image_as_bitmap,write_image
 from libs.utils import check_inside_rect
 from libs.trans import TransFrame
 from libs.segment import SegmentFrame
-from libs.grid import write_grid_csv,get_grid_list,import_grid_csv,fill_grid,set_grid_edit,highlight_row
+from libs.grid import write_grid_csv,get_grid_list,import_grid_csv,empty_grid,fill_grid,set_grid_edit,highlight_row
 import numpy as np
 import os
 import cv2
@@ -244,7 +244,7 @@ class ImageLabeler(wx.App):
 
     def OnGridDelete(self,event):
         '''
-            Delete row in column
+            Delete row in grid
         '''
         row = self.BBGrid.GetGridCursorRow()
         col = self.BBGrid.GetGridCursorCol()
@@ -558,6 +558,9 @@ class ImageLabeler(wx.App):
             A new image is selected and needs to be read in
         '''
 
+        # Delete all rectangles from the canvas
+        self.clear_bb()
+
         # Clear Rectangle List
         self.rect_obj_list = [] 
 
@@ -585,6 +588,7 @@ class ImageLabeler(wx.App):
         # Display the image on the canvas
         self.axes.imshow(self.current_image,cmap='gray') 
         self.canvas.draw()
+        
 
     def OnDelete(self):
         ''' 
@@ -638,6 +642,25 @@ class ImageLabeler(wx.App):
         # Also highlight row in grid
         highlight_row(self,self.selected_rect)
         
+        self.canvas.draw()
+
+
+    def clear_bb(self):
+        '''
+            Remove all rectangles and empty grid
+        '''
+
+        for rectangle in self.rect_obj_list:
+            # Remove object from canvas
+            rectangle.remove()
+
+
+        empty_grid(self)
+
+        # Set the list back to empty
+        self.rect_obj_list = []
+
+        # redraw the canvas
         self.canvas.draw()
 
     def set_panels(self):

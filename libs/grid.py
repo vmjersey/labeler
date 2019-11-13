@@ -41,6 +41,16 @@ def fill_grid(master):
         for colnum in range(len(row)):
             master.BBGrid.SetCellValue(rownum,colnum, str(row[colnum]))
 
+    master.BBGrid.ForceRefresh()
+
+def empty_grid(master):
+    '''
+        Blank out all the cells in the grid
+    '''    
+    for col in range(master.BBGrid.GetNumberCols()):
+        for row in range(master.BBGrid.GetNumberRows()):
+            master.BBGrid.SetCellValue(row,col,"")
+
 
 def get_grid_list(master):
     '''

@@ -48,14 +48,13 @@ class SegmentFrame(wx.Frame):
         '''
         if self.hbox.GetValue() == True:
             boxes = find_contours(self.parent,self.parent.current_image)
-            # Draw all the rectangles
+            # Draw all the rectangles on canvas
             for box in boxes:
                 self.parent.draw_rect(box)
-
+                
             # Populate grid
             fill_grid(self.parent)  
-          
-        self.parent.canvas.draw()
-
+            
+            self.parent.canvas.draw()
 
 
