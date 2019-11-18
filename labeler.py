@@ -223,7 +223,7 @@ class ImageLabeler(wx.App):
         self.frame.CreateStatusBar()
         self.frame.Show(True)
 
-        self.NewImage() 
+        self.FirstImage() 
 
         # Frame for image transformations
         self.TransFrame = TransFrame(None,self)
@@ -555,7 +555,7 @@ class ImageLabeler(wx.App):
  
     def NewImage(self):
         '''
-            A new image is selected and needs to be read in
+            A new image needs to be read in, and various objects need to be cleaned up.
         '''
 
         # Delete all rectangles from the canvas
@@ -563,16 +563,46 @@ class ImageLabeler(wx.App):
 
         # Clear Rectangle List
         self.rect_obj_list = [] 
+        
+        # Read image into original_image and current_image
+        self.ReadImage()
+        
+        # Refresh the canvas
+        self.RefreshImage()
 
-        # Read new image off disk
+    def ReadImage(self):
+        ''' 
+            Read image off disk
+        '''
         self.original_image = cv2.imread(self.imagepath)
 
         #Matplotlib is RGB, opencv is BGR
         self.original_image = cv2.cvtColor(self.original_image, cv2.COLOR_BGR2RGB)
         self.current_image = self.original_image.copy()
-        self.DisplayImage()
 
-    def DisplayImage(self):
+
+    def FirstImage(self):
+        '''
+            The very first image is handled differently
+        '''
+        # Read image into the original_image and current_image
+        self.ReadImage()
+
+        self.image_shape = self.current_image.shape
+        # Set Frame to size of image, plust a little extra
+        self.frame.SetSize((self.image_shape[1]+550, self.image_shape[0] + 200))
+
+        # Set Matplotlib Canvas to size of image
+        self.canvas.SetSize((self.image_shape[1], self.image_shape[0]))
+        self.set_panels()
+
+        # Display the image on the canvas
+        self.img_obj = self.axes.imshow(self.current_image,cmap='gray')
+        self.canvas.draw()
+
+
+
+    def RefreshImage(self):
         '''
             Display new image to Matplotlib canvas and tiddy up
         '''
@@ -586,9 +616,8 @@ class ImageLabeler(wx.App):
         self.set_panels()
 
         # Display the image on the canvas
-        self.axes.imshow(self.current_image,cmap='gray') 
-        self.canvas.draw()
-        
+        self.img_obj.set_array(self.current_image)
+        self.canvas.draw_idle()
 
     def OnDelete(self):
         ''' 
