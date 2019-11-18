@@ -193,7 +193,7 @@ class ImageLabeler(wx.App):
 
         GridControlSizer = wx.GridSizer(1,4,1,1)
 
-        # Create buttons for Grid Control Panel
+        # Button to import csv file with bounding boxes
         self.imbut = wx.Button(self.GridControlPanel,-1)
         imp_img = wx.Image(root_dir + '/icons/import.png', wx.BITMAP_TYPE_ANY)
         imp_img = imp_img.Scale(20,20)
@@ -201,14 +201,22 @@ class ImageLabeler(wx.App):
         self.imbut.Bind(wx.EVT_BUTTON,self.OnImportGrid)
         GridControlSizer.Add(self.imbut,0,wx.ALL |wx.CENTRE | wx.ALIGN_CENTER_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL)
 
-
-        # Create buttons for Grid Control Panel
+        # Button to save grid to csv file
         self.grsavebut = wx.Button(self.GridControlPanel,-1)
         save_img = wx.Image(root_dir + '/icons/filesave.png', wx.BITMAP_TYPE_ANY)
         save_img = save_img.Scale(20,20)
         self.grsavebut.SetBitmap(wx.Bitmap(save_img))
         self.grsavebut.Bind(wx.EVT_BUTTON,self.save_grid)
         GridControlSizer.Add(self.grsavebut,0,wx.ALL |wx.CENTRE | wx.ALIGN_CENTER_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL)
+
+        # Button to delete grid and bounding boxes
+        self.grdelbut = wx.Button(self.GridControlPanel,-1)
+        del_img = wx.Image(root_dir + '/icons/delete_all.png', wx.BITMAP_TYPE_ANY)
+        del_img = del_img.Scale(20,20)
+        self.grdelbut.SetBitmap(wx.Bitmap(del_img))
+        self.grdelbut.Bind(wx.EVT_BUTTON,self.clear_bb)
+        GridControlSizer.Add(self.grdelbut,0,wx.ALL |wx.CENTRE | wx.ALIGN_CENTER_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL)
+
 
         self.GridControlPanel.SetSizer(GridControlSizer)
 
@@ -230,8 +238,6 @@ class ImageLabeler(wx.App):
         
         # Frame for image segmentation
         self.SegFrame = SegmentFrame(None,self)
-
-
 
     def OnGridLeft(self,event):
         '''
@@ -674,7 +680,7 @@ class ImageLabeler(wx.App):
         self.canvas.draw()
 
 
-    def clear_bb(self):
+    def clear_bb(self,event=None):
         '''
             Remove all rectangles and empty grid
         '''
