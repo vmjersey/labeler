@@ -39,7 +39,7 @@ class ImageLabeler(wx.App):
         self.frame = wx.Frame(None, title='Image Display')
 
 
-        root_dir = os.path.dirname(os.path.abspath(__file__))
+        self.root_dir = os.path.dirname(os.path.abspath(__file__))
         self.CanvasPanel = wx.Panel(self.frame,
                     style=wx.BORDER_SUNKEN | wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.CAPTION)
         self.CanvasPanel.SetBackgroundColour("dark gray")
@@ -148,7 +148,7 @@ class ImageLabeler(wx.App):
         ControlSizer = wx.GridSizer(1,4,1,1)
 
         self.sibut = wx.Button(self.ControlPanel,-1)
-        zoom_img = wx.Image(root_dir + '/icons/zoom.png', wx.BITMAP_TYPE_ANY)
+        zoom_img = wx.Image(self.root_dir + '/icons/zoom.png', wx.BITMAP_TYPE_ANY)
         zoom_img = zoom_img.Scale(20,20)
         self.sibut.SetBitmap(wx.Bitmap(zoom_img))
         self.sibut.Bind(wx.EVT_BUTTON,self.zoom)
@@ -157,7 +157,7 @@ class ImageLabeler(wx.App):
 
          
         self.hmbut = wx.Button(self.ControlPanel,-1)
-        home_img = wx.Image(root_dir + '/icons/home.png', wx.BITMAP_TYPE_ANY)
+        home_img = wx.Image(self.root_dir + '/icons/home.png', wx.BITMAP_TYPE_ANY)
         home_img = home_img.Scale(20,20)
         self.hmbut.SetBitmap(wx.Bitmap(home_img))
         self.hmbut.Bind(wx.EVT_BUTTON,self.home)
@@ -166,7 +166,7 @@ class ImageLabeler(wx.App):
 
  
         self.hibut = wx.Button(self.ControlPanel,-1)
-        pan_img = wx.Image(root_dir + '/icons/pan.png', wx.BITMAP_TYPE_ANY)
+        pan_img = wx.Image(self.root_dir + '/icons/pan.png', wx.BITMAP_TYPE_ANY)
         pan_img = pan_img.Scale(20,20)
         self.hibut.SetBitmap(wx.Bitmap(pan_img))
         self.hibut.Bind(wx.EVT_BUTTON,self.pan)
@@ -175,7 +175,7 @@ class ImageLabeler(wx.App):
 
 
         self.plotbut = wx.Button(self.ControlPanel,-1)
-        box_img = wx.Image(root_dir + '/icons/bbox.png', wx.BITMAP_TYPE_ANY)
+        box_img = wx.Image(self.root_dir + '/icons/bbox.png', wx.BITMAP_TYPE_ANY)
         box_img = box_img.Scale(20,20)
         self.plotbut.SetBitmap(wx.Bitmap(box_img))
         self.plotbut.Bind(wx.EVT_BUTTON,self.plot)
@@ -195,7 +195,7 @@ class ImageLabeler(wx.App):
 
         # Button to import csv file with bounding boxes
         self.imbut = wx.Button(self.GridControlPanel,-1)
-        imp_img = wx.Image(root_dir + '/icons/import.png', wx.BITMAP_TYPE_ANY)
+        imp_img = wx.Image(self.root_dir + '/icons/import.png', wx.BITMAP_TYPE_ANY)
         imp_img = imp_img.Scale(20,20)
         self.imbut.SetBitmap(wx.Bitmap(imp_img))
         self.imbut.Bind(wx.EVT_BUTTON,self.OnImportGrid)
@@ -203,7 +203,7 @@ class ImageLabeler(wx.App):
 
         # Button to save grid to csv file
         self.grsavebut = wx.Button(self.GridControlPanel,-1)
-        save_img = wx.Image(root_dir + '/icons/filesave.png', wx.BITMAP_TYPE_ANY)
+        save_img = wx.Image(self.root_dir + '/icons/filesave.png', wx.BITMAP_TYPE_ANY)
         save_img = save_img.Scale(20,20)
         self.grsavebut.SetBitmap(wx.Bitmap(save_img))
         self.grsavebut.Bind(wx.EVT_BUTTON,self.save_grid)
@@ -211,7 +211,7 @@ class ImageLabeler(wx.App):
 
         # Button to delete grid and bounding boxes
         self.grdelbut = wx.Button(self.GridControlPanel,-1)
-        del_img = wx.Image(root_dir + '/icons/delete_all.png', wx.BITMAP_TYPE_ANY)
+        del_img = wx.Image(self.root_dir + '/icons/delete_all.png', wx.BITMAP_TYPE_ANY)
         del_img = del_img.Scale(20,20)
         self.grdelbut.SetBitmap(wx.Bitmap(del_img))
         self.grdelbut.Bind(wx.EVT_BUTTON,self.clear_bb)
@@ -226,6 +226,7 @@ class ImageLabeler(wx.App):
  
         # Hold list of rectangle objects
         self.rect_obj_list = []
+        self.rect_labels = []
 
         # A Statusbar i the bottom of the window
         self.frame.CreateStatusBar()
@@ -345,20 +346,43 @@ class ImageLabeler(wx.App):
     def draw_rect(self,rect):
         if len(rect) > 4:
             x0,y0,x1,y1,label = rect
+            self.rect_labels.append(label)            
         else:
             x0,y0,x1,y1 = rect
+            self.rect_labels.append("")            
 
         x0 = int(x0)
         y0 = int(y0)
         x1 = int(x1)
         y1 = int(y1)
+
+        if x0 < 0:
+            x0 = 0
+        if x1 < 0:
+            x1 = 0
+        if y0 < 0:
+            y0 = 0
+        if y1 < 0:
+            y1 = 0  
+
+        max_height = self.image_shape[0]
+        max_width = self.image_shape[1]
+
+        if x0 > max_width:
+            x0 = max_width
+        if x1 > max_width:
+            x1 = max_width
+        if y0 > max_height:
+            y0 = max_height
+        if y1 > max_height:
+            y1 = max_height
+
         width = int(x1)-int(x0)
         height = int(y1)-int(y0)
-
+ 
         self.rect = Rectangle((int(x0),int(y0)), width, height, facecolor='None', edgecolor='green',linewidth='2')
         self.axes.add_patch(self.rect)
         self.rect_obj_list.append(self.rect)
-
 
 
     def OnSaveGrid(self,event):
@@ -485,11 +509,7 @@ class ImageLabeler(wx.App):
                 self.x0, self.y0, xpress, ypress = self.press
                 dx = event.xdata - xpress
                 dy = event.ydata - ypress
-                self.x1 = self.x0+dx
-                self.y1 = self.y0+dy
-                self.selected_rect_obj.set_x(self.x1)
-                self.selected_rect_obj.set_y(self.y1)
-                self.selected_rect_obj.figure.canvas.draw()
+                
             return 0
         # If the mouse has been pressed draw an updated rectangle when the mouse is 
         # moved so the user can see what the current selection is
@@ -569,7 +589,8 @@ class ImageLabeler(wx.App):
 
         # Clear Rectangle List
         self.rect_obj_list = [] 
-        
+        self.rect_labels = []        
+
         # Read image into original_image and current_image
         self.ReadImage()
         
@@ -694,6 +715,7 @@ class ImageLabeler(wx.App):
 
         # Set the list back to empty
         self.rect_obj_list = []
+        self.rect_labels = []
 
         # redraw the canvas
         self.canvas.draw()

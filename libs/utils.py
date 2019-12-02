@@ -1,3 +1,9 @@
+from sklearn.feature_extraction.image import extract_patches_2d
+
+
+def get_image_patches(image,patch_size=(10,10)):
+    patches = image.extract_patches_2d(one_image, patch_size)
+    return patches
 
 
 def check_inside_rect(coord,rect):
@@ -56,7 +62,7 @@ def get_rect_coords(master):
         y0 = int(master.rect_obj_list[i].get_bbox().y0)
         x1 = int(master.rect_obj_list[i].get_bbox().x1)
         y1 = int(master.rect_obj_list[i].get_bbox().y1)
-        coord = [x0,y0,x1,y1]
+        coord = [x0,y0,x1,y1,master.rect_labels[i]]
         coords_list.append(coord)
     
     return coords_list

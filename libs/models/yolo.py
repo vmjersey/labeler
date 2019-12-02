@@ -45,6 +45,7 @@ class YOLOv3():
     def predict(self):
        
         self.boxes = []
+        self.classes = []
  
         # Convert image so prediction will work
         self.prepare_image()
@@ -94,10 +95,10 @@ class YOLOv3():
             print(v_labels[i], v_scores[i])
             box = v_boxes[i]
 
-            y1 = box.ymin
-            x1 = box.xmin
-            y2 = box.ymax
-            x2 = box.xmax
+            x1 = box[0]
+            y1 = box[1]
+            x2 = box[2]
+            y2 = box[3]
             
             box_coords.append((int(x1),int(y1),int(x2),int(y2),v_labels[i]))
 
@@ -121,15 +122,15 @@ class YOLOv3():
         for i in range(len(self.boxes)):
             x_offset, x_scale = (net_w - new_w)/2./net_w, float(new_w)/net_w
             y_offset, y_scale = (net_h - new_h)/2./net_h, float(new_h)/net_h
-            self.boxes[i].xmin = int((self.boxes[i].xmin - x_offset) / x_scale * image_w)
-            self.boxes[i].xmax = int((self.boxes[i].xmax - x_offset) / x_scale * image_w)
-            self.boxes[i].ymin = int((self.boxes[i].ymin - y_offset) / y_scale * image_h)
-            self.boxes[i].ymax = int((self.boxes[i].ymax - y_offset) / y_scale * image_h)
+            self.boxes[i][0] = int((self.boxes[i][0] - x_offset) / x_scale * image_w)
+            self.boxes[i][1] = int((self.boxes[i][1] - x_offset) / x_scale * image_w)
+            self.boxes[i][2] = int((self.boxes[i][2] - y_offset) / y_scale * image_h)
+            self.boxes[i][3] = int((self.boxes[i][3] - y_offset) / y_scale * image_h)
 
     def bbox_iou(self, box1, box2):
         
-        x11, y11, x12, y12 = [box1.xmin, box1.ymin, box1.xmax, box1.ymax]
-        x21, y21, x22, y22 = [box2.xmin, box2.ymin, box2.xmax, box2.ymax]
+        x11, y11, x12, y12 = [box1[0], box1[1], box1[2], box1[3]]
+        x21, y21, x22, y22 = [box2[0], box2[1], box2[2], box2[3]]
         xA = np.maximum(x11, np.transpose(x21))
         yA = np.maximum(y11, np.transpose(y21))
         xB = np.minimum(x12, np.transpose(x22))
@@ -145,14 +146,15 @@ class YOLOv3():
     def get_boxes(self):
         v_boxes, v_labels, v_scores = list(), list(), list()
         # enumerate all boxes
-        for box in self.boxes:
+        for b in range(len(self.boxes)):
+            box = self.boxes[b]
             # enumerate all possible labels
             for i in range(len(self.labels)):
                 # check if the threshold for this label is high enough
-                if box.classes[i] > self.class_threshold:
+                if self.classes[b][i] > self.class_threshold:
                     v_boxes.append(box)
                     v_labels.append(self.labels[i])
-                    v_scores.append(box.classes[i]*100)
+                    v_scores.append(self.classes[b][i]*100)
                     # don't break, many labels may trigger for one box
         return v_boxes, v_labels, v_scores
 
@@ -181,47 +183,26 @@ class YOLOv3():
                 h = anchors[2 * b + 1] * np.exp(h) / net_h # unit: image height
                 # last elements are class probabilities
                 classes = netout[int(row)][col][b][5:]
-                box = BoundBox(x-w/2, y-h/2, x+w/2, y+h/2, objectness, classes)
+                box = np.array([x-w/2, y-h/2, x+w/2, y+h/2, objectness])
+                self.classes.append(classes)
+                #box = BoundBox(x-w/2, y-h/2, x+w/2, y+h/2, objectness, classes)
                 self.boxes.append(box)
 
     def do_nms(self, nms_thresh):
         if len(self.boxes) > 0:
-            nb_class = len(self.boxes[0].classes)
+            nb_class = self.classes[0].shape[0]
+            print(nb_class)
         else:
             return
         print(nb_class)
         for c in range(nb_class):
-            sorted_indices = np.argsort([-box.classes[c] for box in self.boxes])
+            sorted_indices = np.argsort([-classs[c] for classs in self.classes])
             for i in range(len(sorted_indices)):
                 index_i = sorted_indices[i]
-                if self.boxes[index_i].classes[c] == 0:
+                if self.classes[index_i][c] == 0:
                     continue
                 for j in range(i+1, len(sorted_indices)):
                     index_j = sorted_indices[j]
                     if self.bbox_iou(self.boxes[index_i], self.boxes[index_j]) >= self.class_threshold:
-                        self.boxes[index_j].classes[c] = 0
-
-
-class BoundBox:
-    def __init__(self, xmin, ymin, xmax, ymax, objness = None, classes = None):
-        self.xmin = xmin
-        self.ymin = ymin
-        self.xmax = xmax
-        self.ymax = ymax
-        self.objness = objness
-        self.classes = classes
-        self.label = -1
-        self.score = -1
- 
-    def get_label(self):
-        if self.label == -1:
-            self.label = np.argmax(self.classes)
- 
-        return self.label
- 
-    def get_score(self):
-        if self.score == -1:
-            self.score = self.classes[self.get_label()]
- 
-        return self.score
+                        self.classes[index_j][c] = 0
 
