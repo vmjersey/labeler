@@ -55,14 +55,16 @@ def get_rect_coords(master):
         Loop through all of the Rectangle object and return an Python list 
         with their (x0,y0) and (x1,y1) bounding box coordinates
     '''
-
     coords_list = []
     for i in range(len(master.rect_obj_list)):
         x0 = int(master.rect_obj_list[i].get_bbox().x0)
         y0 = int(master.rect_obj_list[i].get_bbox().y0)
         x1 = int(master.rect_obj_list[i].get_bbox().x1)
-        y1 = int(master.rect_obj_list[i].get_bbox().y1)
+        y1 = int(master.rect_obj_list[i].get_bbox().y1) 
+        
+        # Some bounding boxes don't have a label
         coord = [x0,y0,x1,y1,master.rect_labels[i]]
+
         coords_list.append(coord)
     
     return coords_list

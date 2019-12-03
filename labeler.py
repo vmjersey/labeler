@@ -509,6 +509,11 @@ class ImageLabeler(wx.App):
                 self.x0, self.y0, xpress, ypress = self.press
                 dx = event.xdata - xpress
                 dy = event.ydata - ypress
+                self.x1 = self.x0+dx
+                self.y1 = self.y0+dy
+                self.selected_rect_obj.set_x(self.x1)
+                self.selected_rect_obj.set_y(self.y1)
+                self.selected_rect_obj.figure.canvas.draw()
                 
             return 0
         # If the mouse has been pressed draw an updated rectangle when the mouse is 
@@ -575,7 +580,8 @@ class ImageLabeler(wx.App):
 
             # Keep list of rect objects
             self.rect_obj_list.append(self.rect)
-
+            self.rect_labels.append("")
+    
             # Fill the grid with the bounding boxes
             fill_grid(self)
  

@@ -92,7 +92,6 @@ class YOLOv3():
         box_coords = []
         # summarize what we found
         for i in range(len(v_boxes)):
-            print(v_labels[i], v_scores[i])
             box = v_boxes[i]
 
             x1 = box[0]
@@ -191,10 +190,8 @@ class YOLOv3():
     def do_nms(self, nms_thresh):
         if len(self.boxes) > 0:
             nb_class = self.classes[0].shape[0]
-            print(nb_class)
         else:
             return
-        print(nb_class)
         for c in range(nb_class):
             sorted_indices = np.argsort([-classs[c] for classs in self.classes])
             for i in range(len(sorted_indices)):
