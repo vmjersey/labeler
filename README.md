@@ -9,9 +9,10 @@ Wishlist:
    * Add ability to resize rectangles.
    * Add ability to draw free hand for semantic segmentation?
    * Add ability to load model in Keras for bounding boxes suggestions.
+   * Add ability to have script generate image
 
 Bugs:
-
+   * YoloV3 is slow
 
 
 

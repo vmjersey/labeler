@@ -451,7 +451,6 @@ class ImageLabeler(wx.App):
         '''
             Actions taken when mouse button is pressed
         '''
-
         # Is the click inside a rectangle?
         found = 0
         current_x = event.xdata
@@ -537,7 +536,7 @@ class ImageLabeler(wx.App):
         '''
             Actions taken with mouse button is released
         '''
-        
+
         # Rectangle has finished moving and objects need to be updated.
         if self.is_moving == True:
 
@@ -581,9 +580,11 @@ class ImageLabeler(wx.App):
             # Keep list of rect objects
             self.rect_obj_list.append(self.rect)
             self.rect_labels.append("")
-    
+   
             # Fill the grid with the bounding boxes
             fill_grid(self)
+
+
  
     def NewImage(self):
         '''
@@ -652,6 +653,7 @@ class ImageLabeler(wx.App):
         self.img_obj.set_array(self.current_image)
         self.canvas.draw_idle()
 
+
     def OnDelete(self):
         ''' 
             Delete the selected rectangle
@@ -669,13 +671,13 @@ class ImageLabeler(wx.App):
             return 1 
 
         rectangle = self.rect_obj_list[self.selected_rect]
-        # Remove object from canvas
-        rectangle.remove()
         # Remove object from list
         self.rect_obj_list.remove(rectangle)
+        del self.rect_labels[self.selected_rect]
+        # Remove object from canvas
+        rectangle.remove()
         # Remove coordinates from grid
         self.BBGrid.DeleteRows(self.selected_rect)
-
         # redraw the canvas
         self.canvas.draw()
 

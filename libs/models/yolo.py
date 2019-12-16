@@ -148,13 +148,17 @@ class YOLOv3():
         for b in range(len(self.boxes)):
             box = self.boxes[b]
             # enumerate all possible labels
-            for i in range(len(self.labels)):
-                # check if the threshold for this label is high enough
-                if self.classes[b][i] > self.class_threshold:
+            indices = np.argwhere(self.classes[b] > self.class_threshold)
+
+            if indices.shape[0] == 0:
+                continue
+            else:
+                for indice in indices:
+                    i = indice[0]
                     v_boxes.append(box)
                     v_labels.append(self.labels[i])
                     v_scores.append(self.classes[b][i]*100)
-                    # don't break, many labels may trigger for one box
+
         return v_boxes, v_labels, v_scores
 
     def decode_netout(self, netout, anchors, obj_thresh, net_h, net_w):
@@ -184,7 +188,6 @@ class YOLOv3():
                 classes = netout[int(row)][col][b][5:]
                 box = np.array([x-w/2, y-h/2, x+w/2, y+h/2, objectness])
                 self.classes.append(classes)
-                #box = BoundBox(x-w/2, y-h/2, x+w/2, y+h/2, objectness, classes)
                 self.boxes.append(box)
 
     def do_nms(self, nms_thresh):
@@ -202,4 +205,7 @@ class YOLOv3():
                     index_j = sorted_indices[j]
                     if self.bbox_iou(self.boxes[index_i], self.boxes[index_j]) >= self.class_threshold:
                         self.classes[index_j][c] = 0
+
+
+
 
