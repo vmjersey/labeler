@@ -26,7 +26,7 @@ class YOLOv3():
         self.model = load_model(self.parent.root_dir+"/libs/models/yolov3.h5")
         # Set Anchors file will use
         self.anchors = [[116,90, 156,198, 373,326], [30,61, 62,45, 59,119], [10,13, 16,30, 33,23]]
-        self.class_threshold = 0.8
+        self.class_threshold = 0.97
         self.labels = [
             "person", "bicycle", "car", "motorbike", "aeroplane", "bus", "train", "truck",
             "boat", "traffic light", "fire hydrant", "stop sign", "parking meter", "bench",
@@ -50,44 +50,20 @@ class YOLOv3():
         # Convert image so prediction will work
         self.prepare_image()
         
-        time_before = time.time()
         prediction = self.model.predict(self.pred_image)
-        time_after = time.time()
-        prediction_time = time_after - time_before
-        print("Model Prediction took:", prediction_time)
-
 
         orig_width = self.parent.image_shape[1]
         orig_height = self.parent.image_shape[0]
 
-        time_before = time.time()
         for i in range(len(prediction)):
             # decode the output of the network
             self.decode_netout(prediction[i][0], self.anchors[i], self.class_threshold, self.pred_height, self.pred_width)
-        time_after = time.time()
-        prediction_time = time_after - time_before
-        print("Decode Time:", prediction_time)
 
-        time_before = time.time()
         # correct the sizes of the bounding boxes for the shape of the image
         self.correct_yolo_boxes(orig_height, orig_width, self.pred_height, self.pred_width)
-        time_after = time.time()
-        prediction_time = time_after - time_before
-        print("Correction Time:", prediction_time)
 
-        time_before = time.time()
-        # suppress non-maximal boxes
-        self.do_nms(0.5)
-        time_after = time.time()
-        prediction_time = time_after - time_before
-        print("Non-maximal Time:", prediction_time)
-
-        time_before = time.time()
         # get the details of the detected objects
         v_boxes, v_labels, v_scores = self.get_boxes()
-        time_after = time.time()
-        prediction_time = time_after - time_before
-        print("Get Boxes Time:", prediction_time)
 
         box_coords = []
         # summarize what we found
@@ -125,22 +101,6 @@ class YOLOv3():
             self.boxes[i][1] = int((self.boxes[i][1] - x_offset) / x_scale * image_w)
             self.boxes[i][2] = int((self.boxes[i][2] - y_offset) / y_scale * image_h)
             self.boxes[i][3] = int((self.boxes[i][3] - y_offset) / y_scale * image_h)
-
-    def bbox_iou(self, box1, box2):
-        
-        x11, y11, x12, y12 = [box1[0], box1[1], box1[2], box1[3]]
-        x21, y21, x22, y22 = [box2[0], box2[1], box2[2], box2[3]]
-        xA = np.maximum(x11, np.transpose(x21))
-        yA = np.maximum(y11, np.transpose(y21))
-        xB = np.minimum(x12, np.transpose(x22))
-        yB = np.minimum(y12, np.transpose(y22))
-        interArea = np.maximum((xB - xA + 1), 0) * np.maximum((yB - yA + 1), 0)
-        boxAArea = (x12 - x11 + 1) * (y12 - y11 + 1)
-        boxBArea = (x22 - x21 + 1) * (y22 - y21 + 1)
-
-        iou = interArea / (boxAArea + np.transpose(boxBArea) - interArea)
-
-        return iou
 
     def get_boxes(self):
         v_boxes, v_labels, v_scores = list(), list(), list()
@@ -189,23 +149,3 @@ class YOLOv3():
                 box = np.array([x-w/2, y-h/2, x+w/2, y+h/2, objectness])
                 self.classes.append(classes)
                 self.boxes.append(box)
-
-    def do_nms(self, nms_thresh):
-        if len(self.boxes) > 0:
-            nb_class = self.classes[0].shape[0]
-        else:
-            return
-        for c in range(nb_class):
-            sorted_indices = np.argsort([-classs[c] for classs in self.classes])
-            for i in range(len(sorted_indices)):
-                index_i = sorted_indices[i]
-                if self.classes[index_i][c] == 0:
-                    continue
-                for j in range(i+1, len(sorted_indices)):
-                    index_j = sorted_indices[j]
-                    if self.bbox_iou(self.boxes[index_i], self.boxes[index_j]) >= self.class_threshold:
-                        self.classes[index_j][c] = 0
-
-
-
-

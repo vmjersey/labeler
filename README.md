@@ -12,7 +12,6 @@ Wishlist:
    * Add ability to have script generate image
 
 Bugs:
-   * YoloV3 is slow
-
+   * Allow image to scroll
 
 
