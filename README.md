@@ -12,6 +12,5 @@ Wishlist:
    * Add ability to have script generate image
 
 Bugs:
-   * Allow image to scroll
 
 

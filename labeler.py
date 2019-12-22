@@ -613,7 +613,8 @@ class ImageLabeler(wx.App):
         #Matplotlib is RGB, opencv is BGR
         self.original_image = cv2.cvtColor(self.original_image, cv2.COLOR_BGR2RGB)
         self.current_image = self.original_image.copy()
-
+        self.image_shape = self.current_image.shape
+    
 
     def FirstImage(self):
         '''
@@ -622,11 +623,9 @@ class ImageLabeler(wx.App):
         # Read image into the original_image and current_image
         self.ReadImage()
 
-        self.image_shape = self.current_image.shape
         # Set Frame to size of image, plust a little extra
         self.frame.SetSize((self.image_shape[1]+550, self.image_shape[0] + 200))
 
-        # Set Matplotlib Canvas to size of image
         self.canvas.SetSize((self.image_shape[1], self.image_shape[0]))
         self.set_panels()
 
@@ -641,7 +640,6 @@ class ImageLabeler(wx.App):
             Display new image to Matplotlib canvas and tiddy up
         '''
 
-        self.image_shape = self.current_image.shape
         # Set Frame to size of image, plust a little extra
         self.frame.SetSize((self.image_shape[1]+550, self.image_shape[0] + 200))
         
@@ -650,7 +648,10 @@ class ImageLabeler(wx.App):
         self.set_panels()
 
         # Display the image on the canvas
-        self.img_obj.set_array(self.current_image)
+        #self.img_obj = self.axes.imshow(self.current_image,cmap='gray')
+        #self.img_obj.set_array(self.current_image)
+        self.img_obj.set_extent((0.0,self.image_shape[1],self.image_shape[0],0.0))
+        self.img_obj.set_data(self.current_image)
         self.canvas.draw_idle()
 
 
