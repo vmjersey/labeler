@@ -11,6 +11,7 @@ from libs.grid import write_grid_csv,get_grid_list,import_grid_csv,empty_grid,fi
 import numpy as np
 import os
 import cv2
+import argparse
 from PIL import Image   
 import matplotlib  
 from matplotlib.backend_tools import Cursors     
@@ -31,14 +32,16 @@ class ImageLabeler(wx.App):
     The Main Application Class
     '''
 
-    def __init__(self):
+    def __init__(self,starting_image=None):
 
         wx.App.__init__(self) 
+
+        self.starting_image = starting_image
 
         # Frame that will contain image and grid
         self.frame = wx.Frame(None, title='Image Display')
 
-
+        # Where does our code live
         self.root_dir = os.path.dirname(os.path.abspath(__file__))
         self.CanvasPanel = wx.Panel(self.frame,
                     style=wx.BORDER_SUNKEN | wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.CAPTION)
@@ -103,7 +106,12 @@ class ImageLabeler(wx.App):
         #Keep track of how many images you have displayed
         self.imagecounter = 0
 
-        self.imagepath = "./image.jpg"
+        # set image path
+        if self.starting_image == None:
+            self.imagepath = self.root_dir +"/image.jpg"
+        else:
+            self.imagepath = self.starting_image
+
 
         # Create Panel to display Bounding Box Coordinates
         self.BBPanel = wx.Panel(self.frame,
@@ -762,8 +770,17 @@ class ImageLabeler(wx.App):
 
     def user_error(self,message):
         wx.MessageBox(message, 'Error', wx.ICON_ERROR | wx.OK)
- 
-app = ImageLabeler()
+
+
+parser = argparse.ArgumentParser(description='A gui to help expedite the labeling of images, namely with bounding boxes.') 
+parser.add_argument('--file', help='Starting file to opened directly by image labeler.')
+
+
+args = parser.parse_args()
+
+image_file=args.file
+
+app = ImageLabeler(starting_image=image_file)
 app.MainLoop()
 
 
