@@ -1,4 +1,42 @@
 from sklearn.feature_extraction.image import extract_patches_2d
+import os
+import glob
+
+def get_list_files(search_path):
+
+    # Find all PNG files
+    png_files = glob.glob(search_path + '/**/*.png', recursive=True)
+    # Find all JPG files
+    jpg_files = glob.glob(search_path + '/**/*.jpg', recursive=True)   
+
+    files = png_files + jpg_files
+
+    # Build an object that contains path, and other information about image
+    file_obj = []
+    i=0
+    for full_filepath in files:
+        file_size = os.path.getsize(full_filepath)
+        
+        #check to see if CSV labels file exists for image
+        file_csv = os.path.splitext(full_filepath)[0] + ".csv"
+        
+        if os.path.exists(file_csv) == False:
+            file_csv = None
+
+                
+
+        file_obj.append(
+            { 
+                "path" : full_filepath,
+                "size" : file_size,
+                "labels" : file_csv
+            }
+        ) 
+
+    return file_obj
+        
+
+    
 
 
 def get_image_patches(image,patch_size=(10,10)):
