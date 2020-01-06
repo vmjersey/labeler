@@ -29,11 +29,16 @@ def get_list_files(search_path):
             { 
                 "path" : full_filepath,
                 "size" : file_size,
-                "labels" : file_csv
+                "labels" : file_csv,
+                "status" : 'in progress'
             }
         ) 
 
-    return file_obj
+
+    if len(file_obj) == 0:
+        return None
+    else:
+        return file_obj
         
 
     

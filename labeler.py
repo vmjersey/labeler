@@ -4,8 +4,8 @@ import wx
 import wx.grid as gridlib
 import wx.lib.agw.buttonpanel as BP
 from libs.imaging import convert_bw,convert_gs,read_image_as_bitmap,write_image
-from libs.utils import check_inside_rect
 from libs.utils import get_list_files
+from libs.utils import check_inside_rect
 from libs.trans import TransFrame
 from libs.segment import SegmentFrame
 from libs.grid import write_grid_csv,get_grid_list,import_grid_csv,empty_grid,fill_grid,set_grid_edit,highlight_row
@@ -33,27 +33,22 @@ class ImageLabeler(wx.App):
     The Main Application Class
     '''
 
-    def __init__(self,starting_image=None,starting_dirs=None):
+    def __init__(self,starting_image=None,image_dir=None):
 
         wx.App.__init__(self) 
 
         self.starting_image = starting_image
-        self.starting_dirs = starting_dirs
+        self.image_dir = image_dir
+        
+        # Mode that the labeler should use: single or batch
+        self.labeler_mode = "single"
 
-        # Set the minimum width for image panel
-        self.min_image_width = 500
-        self.min_image_height = 500
 
         # Frame that will contain image and grid
         self.frame = wx.Frame(None, title='Image Display')
 
         # Where does our code live
         self.root_dir = os.path.dirname(os.path.abspath(__file__))
-        
-        # Where in the filesystem is the user running this from:
-        self.cw_dir = os.getcwd()
-
-
         self.CanvasPanel = wx.Panel(self.frame,
                     style=wx.BORDER_SUNKEN | wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.CAPTION)
         self.CanvasPanel.SetBackgroundColour("dark gray")
@@ -117,27 +112,31 @@ class ImageLabeler(wx.App):
         #Keep track of how many images you have displayed
         self.imagecounter = 0
 
-        # get list of files in self.working_dir
-        self.image_files = []
-        
+        #Define where this program should find images
+        if self.image_dir == None:
+            self.image_dir = os.getcwd()
 
-        # Set working directory, if user specified command argument
-        if self.starting_dirs == None:
-            # Are there are any images in the cwd?
-            self.image_files = get_list_files(self.cw_dir)
-            self.working_dir = self.cw_dir
+        # Get list of image files in the image_dir
+        self.images_obj = get_list_files(self.image_dir) 
+      
+
+        if self.images_obj != None:
+            self.labeler_mode = "batch"
         else:
-            self.image_files = get_list_files(self.starting_dirs)
-            self.working_dir = self.starting_dirs
-           
-
-        if (len(self.image_files) > 0) and (self.starting_image == None):
-            self.imagepath = self.image_files[0]['path']
-        elif (len(self.image_files) > 0) and (self.starting_image != None):
+            print("Warning: no images found in image path or current directory.")
+            
+        #What image will we be starting on
+        if self.starting_image != None: #use the one specified on the command line.
             self.imagepath = self.starting_image
-        else:
-            # set image path
+        elif self.labeler_mode == "single": #Just use the default application image
+            print("Info: Using application default image:", self.root_dir +"/image.jpg")
             self.imagepath = self.root_dir +"/image.jpg"
+        elif self.labeler_mode == "batch":
+            print("Info: Starting labeler in batch mode, multiple images detected.")
+            #in batch mode start with the first image
+            self.imagepath = self.images_obj[0]['path']            
+        
+        
 
 
         # Create Panel to display Bounding Box Coordinates
@@ -179,7 +178,8 @@ class ImageLabeler(wx.App):
 
         # Create Buttons to help label image
         self.button_list = []
-        ControlSizer = wx.GridSizer(1,4,1,1)
+
+        ControlSizer = wx.GridSizer(1,6,1,1)
 
         self.sibut = wx.Button(self.ControlPanel,-1)
         zoom_img = wx.Image(self.root_dir + '/icons/zoom.png', wx.BITMAP_TYPE_ANY)
@@ -215,6 +215,25 @@ class ImageLabeler(wx.App):
         self.plotbut.Bind(wx.EVT_BUTTON,self.plot)
         self.button_list.append(self.plotbut) 
         ControlSizer.Add(self.plotbut,0,wx.ALL |wx.CENTRE | wx.ALIGN_CENTER_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL)
+
+
+        self.prevbut = wx.Button(self.ControlPanel,-1)
+        box_img = wx.Image(self.root_dir + '/icons/left_arrow.png', wx.BITMAP_TYPE_ANY)
+        box_img = box_img.Scale(20,20)
+        self.prevbut.SetBitmap(wx.Bitmap(box_img))
+        self.prevbut.Bind(wx.EVT_BUTTON,self.prev)
+        self.button_list.append(self.prevbut)
+        ControlSizer.Add(self.prevbut,0,wx.ALL |wx.CENTRE | wx.ALIGN_CENTER_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL)
+
+
+        self.nextbut = wx.Button(self.ControlPanel,-1)
+        box_img = wx.Image(self.root_dir + '/icons/right_arrow.png', wx.BITMAP_TYPE_ANY)
+        box_img = box_img.Scale(20,20)
+        self.nextbut.SetBitmap(wx.Bitmap(box_img))
+        self.nextbut.Bind(wx.EVT_BUTTON,self.next)
+        self.button_list.append(self.nextbut)
+        ControlSizer.Add(self.nextbut,0,wx.ALL |wx.CENTRE | wx.ALIGN_CENTER_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL)
+
 
         self.ControlPanel.SetSizer(ControlSizer) 
 
@@ -348,6 +367,23 @@ class ImageLabeler(wx.App):
             self.toolbar.zoom()
         elif self.toolbar._active == 'PAN':
             self.toolbar.pan() 
+
+    def next(self,event):
+        '''
+            Draw a rectangle on the canvas
+        '''
+        self.cursor_mode = "nobb"
+        self.toggle_cursor_mode(self.nextbut)
+
+
+    def prev(self,event):
+        '''
+            Draw a rectangle on the canvas
+        '''
+        self.cursor_mode = "nobb"
+        self.toggle_cursor_mode(self.prevbut)
+
+
  
     def OnFileExit(self,event):
         '''
@@ -657,6 +693,10 @@ class ImageLabeler(wx.App):
         # Read image into the original_image and current_image
         self.ReadImage()
 
+        # Set Frame to size of image, plust a little extra
+        self.frame.SetSize((self.image_shape[1]+550, self.image_shape[0] + 200))
+
+        self.canvas.SetSize((self.image_shape[1], self.image_shape[0]))
         self.set_panels()
 
         # Display the image on the canvas
@@ -670,6 +710,11 @@ class ImageLabeler(wx.App):
             Display new image to Matplotlib canvas and tiddy up
         '''
 
+        # Set Frame to size of image, plust a little extra
+        self.frame.SetSize((self.image_shape[1]+550, self.image_shape[0] + 200))
+        
+        # Set Matplotlib Canvas to size of image
+        self.canvas.SetSize((self.image_shape[1], self.image_shape[0]))
         self.set_panels()
 
         # Display the image on the canvas
@@ -758,33 +803,16 @@ class ImageLabeler(wx.App):
         '''
             Set the size and position of the pannels based on the images size.
         '''
-        if self.image_shape[1] < self.min_image_width:
-            width = self.min_image_width
-        else:
-            width = self.image_shape[1]
-        
-        if self.image_shape[0] < self.min_image_height:
-            height = self.min_image_height
-        else:
-            height = self.image_shape[0]
-
-
-        # Set Frame to size of image, plust a little extra
-        self.frame.SetSize((width+550, height + 200))
-
-        self.canvas.SetSize((width, height))
-
-
         self.CanvasPanel.SetPosition((0,0)) 
-        self.CanvasPanel.SetSize((width,height))
+        self.CanvasPanel.SetSize((self.image_shape[1],self.image_shape[0]))
 
-        self.ControlPanel.SetPosition((0,height+5))
-        self.ControlPanel.SetSize((width,50))
+        self.ControlPanel.SetPosition((0,self.image_shape[0]+5))
+        self.ControlPanel.SetSize((self.image_shape[1],50))
 
-        self.BBPanel.SetPosition((width+5,0))
-        self.BBPanel.SetSize((525,height))
+        self.BBPanel.SetPosition((self.image_shape[1]+5,0))
+        self.BBPanel.SetSize((525,self.image_shape[0]))
 
-        self.GridControlPanel.SetPosition((width+5,height+5))
+        self.GridControlPanel.SetPosition((self.image_shape[1]+5,self.image_shape[0]+5))
         self.GridControlPanel.SetSize((525,50))
 
 
@@ -808,17 +836,15 @@ class ImageLabeler(wx.App):
 
 parser = argparse.ArgumentParser(description='A gui to help expedite the labeling of images, namely with bounding boxes.') 
 parser.add_argument('--file', help='Starting file to opened directly by image labeler.')
-parser.add_argument('--dir', help='Starting directory, where the labeler will get list of images to be labeled.  If not specified current working direcgtory will be used.')
+parser.add_argument('--imagedir', help='Starting directory, where the labeler will get list of images to be labeled.  If not specified current working direcgtory will be used.')
 
 args = parser.parse_args()
 
 # Assign arguments to variables
 image_file=args.file
-image_dirs=args.dir
+image_dir=args.imagedir
 
-
-#Initialize the main application
-app = ImageLabeler(starting_image=image_file,starting_dirs=image_dirs)
+app = ImageLabeler(starting_image=image_file,image_dir=image_dir)
 app.MainLoop()
 
 
