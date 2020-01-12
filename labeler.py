@@ -135,8 +135,6 @@ class ImageLabeler(wx.App):
             print("Info: Starting labeler in batch mode, multiple images detected.")
             #in batch mode start with the first image
             self.imagepath = self.images_obj[0]['path']            
-        
-        
 
 
         # Create Panel to display Bounding Box Coordinates
@@ -222,7 +220,6 @@ class ImageLabeler(wx.App):
         box_img = box_img.Scale(20,20)
         self.prevbut.SetBitmap(wx.Bitmap(box_img))
         self.prevbut.Bind(wx.EVT_BUTTON,self.prev)
-        self.button_list.append(self.prevbut)
         ControlSizer.Add(self.prevbut,0,wx.ALL |wx.CENTRE | wx.ALIGN_CENTER_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL)
 
 
@@ -231,7 +228,6 @@ class ImageLabeler(wx.App):
         box_img = box_img.Scale(20,20)
         self.nextbut.SetBitmap(wx.Bitmap(box_img))
         self.nextbut.Bind(wx.EVT_BUTTON,self.next)
-        self.button_list.append(self.nextbut)
         ControlSizer.Add(self.nextbut,0,wx.ALL |wx.CENTRE | wx.ALIGN_CENTER_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL)
 
 
@@ -375,6 +371,31 @@ class ImageLabeler(wx.App):
         self.cursor_mode = "nobb"
         self.toggle_cursor_mode(self.nextbut)
 
+        # Find Out which image you are currently on in self.images_obj
+        i=0
+        for obj in self.images_obj:
+            if obj['path'] == self.imagepath:
+                self.cur_obj_num = i
+                break
+            i+=1
+        
+
+        if self.cur_obj_num+1 == len(self.images_obj):
+            self.user_error("There are no more images left to work on.")
+            self.cur_obj_num=0 
+            return 0
+
+
+        self.cur_obj_num += 1
+ 
+        # Now display the new image
+        self.imagepath = self.images_obj[self.cur_obj_num]['path']
+        self.NewImage() 
+       
+ 
+
+
+
 
     def prev(self,event):
         '''
@@ -382,6 +403,28 @@ class ImageLabeler(wx.App):
         '''
         self.cursor_mode = "nobb"
         self.toggle_cursor_mode(self.prevbut)
+        # Find Out which image you are currently on in self.images_obj
+        i=0
+        for obj in self.images_obj:
+            if obj['path'] == self.imagepath:
+                self.cur_obj_num = i
+                break
+            i+=1
+
+
+        if self.cur_obj_num == 0:
+            self.user_error("You are on the first image.")
+            return 0
+
+
+        self.cur_obj_num -= 1
+
+
+        # Now display the new image
+        self.imagepath = self.images_obj[self.cur_obj_num]['path']
+        self.NewImage()
+
+
 
 
  
