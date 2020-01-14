@@ -69,6 +69,11 @@ class SegmentFrame(wx.Frame):
         '''
         if self.hbox.GetValue() == True:
             boxes = find_contours(self.parent,self.parent.current_image)
+
+            if len(boxes) > 99:
+                self.parent.user_error("This algorithm found "+str(len(boxes))+" bounding boxes.  This is probalby not the correct method for segmenting this image.")
+                return 0                
+
             # Draw all the rectangles on canvas
             for box in boxes:
                 self.parent.draw_rect(box)
