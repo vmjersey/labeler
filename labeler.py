@@ -131,6 +131,7 @@ class ImageLabeler(wx.App):
         elif self.labeler_mode == "single": #Just use the default application image
             print("Info: Using application default image:", self.root_dir +"/image.jpg")
             self.imagepath = self.root_dir +"/image.jpg"
+
         elif self.labeler_mode == "batch":
             print("Info: Starting labeler in batch mode, multiple images detected.")
             #in batch mode start with the first image
@@ -167,7 +168,7 @@ class ImageLabeler(wx.App):
         self.BBPanel.SetSizer(BBsizer)
 
 
-        # Create Panel for Image Controls.
+        # Create Panel for Image Controls
         self.ControlPanel = wx.Panel(self.frame,
                     style=wx.BORDER_SUNKEN | wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.CAPTION)
         self.ControlBox = wx.BoxSizer(wx.VERTICAL)
@@ -177,61 +178,60 @@ class ImageLabeler(wx.App):
         # Create Buttons to help label image
         self.button_list = []
 
-        ControlSizer = wx.GridSizer(1,6,1,1)
-
-        self.sibut = wx.Button(self.ControlPanel,-1)
+        self.sibut = wx.Button(self.ControlPanel,-1,size=(50,50),pos=(5,5))
         zoom_img = wx.Image(self.root_dir + '/icons/zoom.png', wx.BITMAP_TYPE_ANY)
         zoom_img = zoom_img.Scale(20,20)
         self.sibut.SetBitmap(wx.Bitmap(zoom_img))
         self.sibut.Bind(wx.EVT_BUTTON,self.zoom)
         self.button_list.append(self.sibut)
-        ControlSizer.Add(self.sibut,0,wx.ALL |wx.CENTRE | wx.ALIGN_CENTER_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL)
-
          
-        self.hmbut = wx.Button(self.ControlPanel,-1)
+        self.hmbut = wx.Button(self.ControlPanel,-1,size=(50,50),pos=(60,5))
         home_img = wx.Image(self.root_dir + '/icons/home.png', wx.BITMAP_TYPE_ANY)
         home_img = home_img.Scale(20,20)
         self.hmbut.SetBitmap(wx.Bitmap(home_img))
         self.hmbut.Bind(wx.EVT_BUTTON,self.home)
         self.button_list.append(self.hmbut)
-        ControlSizer.Add(self.hmbut,0,wx.ALL |wx.CENTRE | wx.ALIGN_CENTER_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL) 
-
  
-        self.hibut = wx.Button(self.ControlPanel,-1)
+        self.hibut = wx.Button(self.ControlPanel,-1,size=(50,50),pos=(115,5))
         pan_img = wx.Image(self.root_dir + '/icons/pan.png', wx.BITMAP_TYPE_ANY)
         pan_img = pan_img.Scale(20,20)
         self.hibut.SetBitmap(wx.Bitmap(pan_img))
         self.hibut.Bind(wx.EVT_BUTTON,self.pan)
         self.button_list.append(self.hibut)
-        ControlSizer.Add(self.hibut,0,wx.ALL |wx.CENTRE | wx.ALIGN_CENTER_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL) 
 
-
-        self.plotbut = wx.Button(self.ControlPanel,-1)
+        self.plotbut = wx.Button(self.ControlPanel,-1,size=(50,50),pos=(170,5))
         box_img = wx.Image(self.root_dir + '/icons/bbox.png', wx.BITMAP_TYPE_ANY)
         box_img = box_img.Scale(20,20)
         self.plotbut.SetBitmap(wx.Bitmap(box_img))
         self.plotbut.Bind(wx.EVT_BUTTON,self.plot)
         self.button_list.append(self.plotbut) 
-        ControlSizer.Add(self.plotbut,0,wx.ALL |wx.CENTRE | wx.ALIGN_CENTER_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL)
 
 
-        self.prevbut = wx.Button(self.ControlPanel,-1)
+        # Create Panel Controls for Dataset movement
+        self.BatchPanel = wx.Panel(self.frame,
+                    style=wx.BORDER_SUNKEN | wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.CAPTION)
+        self.BatchBox = wx.BoxSizer(wx.VERTICAL)
+        self.BatchBox.Add(self.BatchPanel)
+        self.BatchPanel.SetBackgroundColour("dark gray")
+
+
+        self.prevbut = wx.Button(self.BatchPanel,-1,size=(50,50),pos=(7,5))
         box_img = wx.Image(self.root_dir + '/icons/left_arrow.png', wx.BITMAP_TYPE_ANY)
         box_img = box_img.Scale(20,20)
         self.prevbut.SetBitmap(wx.Bitmap(box_img))
         self.prevbut.Bind(wx.EVT_BUTTON,self.prev)
-        ControlSizer.Add(self.prevbut,0,wx.ALL |wx.CENTRE | wx.ALIGN_CENTER_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL)
 
-
-        self.nextbut = wx.Button(self.ControlPanel,-1)
+        self.nextbut = wx.Button(self.BatchPanel,-1,size=(50,50),pos=(60,5))
         box_img = wx.Image(self.root_dir + '/icons/right_arrow.png', wx.BITMAP_TYPE_ANY)
         box_img = box_img.Scale(20,20)
         self.nextbut.SetBitmap(wx.Bitmap(box_img))
         self.nextbut.Bind(wx.EVT_BUTTON,self.next)
-        ControlSizer.Add(self.nextbut,0,wx.ALL |wx.CENTRE | wx.ALIGN_CENTER_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL)
+
+        if self.labeler_mode == "single": #Disable button in single mode
+            self.nextbut.Disable()
+            self.prevbut.Disable()
 
 
-        self.ControlPanel.SetSizer(ControlSizer) 
 
         # Create Panel for Grid controls
         self.GridControlPanel = wx.Panel(self.frame,
@@ -240,34 +240,27 @@ class ImageLabeler(wx.App):
         self.GridControlBox.Add(self.GridControlPanel)
         self.GridControlPanel.SetBackgroundColour("dark gray")
 
-        GridControlSizer = wx.GridSizer(1,4,1,1)
 
         # Button to import csv file with bounding boxes
-        self.imbut = wx.Button(self.GridControlPanel,-1)
+        self.imbut = wx.Button(self.GridControlPanel,-1,size=(50,50),pos=(5,5))
         imp_img = wx.Image(self.root_dir + '/icons/import.png', wx.BITMAP_TYPE_ANY)
         imp_img = imp_img.Scale(20,20)
         self.imbut.SetBitmap(wx.Bitmap(imp_img))
         self.imbut.Bind(wx.EVT_BUTTON,self.OnImportGrid)
-        GridControlSizer.Add(self.imbut,0,wx.ALL |wx.CENTRE | wx.ALIGN_CENTER_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL)
 
         # Button to save grid to csv file
-        self.grsavebut = wx.Button(self.GridControlPanel,-1)
+        self.grsavebut = wx.Button(self.GridControlPanel,-1,size=(50,50),pos=(60,5))
         save_img = wx.Image(self.root_dir + '/icons/filesave.png', wx.BITMAP_TYPE_ANY)
         save_img = save_img.Scale(20,20)
         self.grsavebut.SetBitmap(wx.Bitmap(save_img))
         self.grsavebut.Bind(wx.EVT_BUTTON,self.save_grid)
-        GridControlSizer.Add(self.grsavebut,0,wx.ALL |wx.CENTRE | wx.ALIGN_CENTER_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL)
 
         # Button to delete grid and bounding boxes
-        self.grdelbut = wx.Button(self.GridControlPanel,-1)
+        self.grdelbut = wx.Button(self.GridControlPanel,-1,size=(50,50),pos=(115,5))
         del_img = wx.Image(self.root_dir + '/icons/delete_all.png', wx.BITMAP_TYPE_ANY)
         del_img = del_img.Scale(20,20)
         self.grdelbut.SetBitmap(wx.Bitmap(del_img))
         self.grdelbut.Bind(wx.EVT_BUTTON,self.clear_bb)
-        GridControlSizer.Add(self.grdelbut,0,wx.ALL |wx.CENTRE | wx.ALIGN_CENTER_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL)
-
-
-        self.GridControlPanel.SetSizer(GridControlSizer)
 
 
         # Are we moving the rectangle or creating a new one
@@ -393,9 +386,6 @@ class ImageLabeler(wx.App):
         self.NewImage() 
        
  
-
-
-
 
     def prev(self,event):
         '''
@@ -846,17 +836,25 @@ class ImageLabeler(wx.App):
         '''
             Set the size and position of the pannels based on the images size.
         '''
+        if self.image_shape[1] < 525:
+            min_startx = 525
+        else:
+            min_startx = self.image_shape[1]
+
         self.CanvasPanel.SetPosition((0,0)) 
         self.CanvasPanel.SetSize((self.image_shape[1],self.image_shape[0]))
 
         self.ControlPanel.SetPosition((0,self.image_shape[0]+5))
-        self.ControlPanel.SetSize((self.image_shape[1],50))
+        self.ControlPanel.SetSize((235,70))
 
-        self.BBPanel.SetPosition((self.image_shape[1]+5,0))
+        self.BatchPanel.SetPosition((240,self.image_shape[0]+5))
+        self.BatchPanel.SetSize((125,70))
+
+        self.BBPanel.SetPosition((min_startx+5,0))
         self.BBPanel.SetSize((525,self.image_shape[0]))
 
-        self.GridControlPanel.SetPosition((self.image_shape[1]+5,self.image_shape[0]+5))
-        self.GridControlPanel.SetSize((525,50))
+        self.GridControlPanel.SetPosition((min_startx+5,self.image_shape[0]+5))
+        self.GridControlPanel.SetSize((525,70))
 
 
     def save_grid(self,event):

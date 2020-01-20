@@ -4,7 +4,6 @@ Python Image Labeler
 
 Wishlist: 
 
-   * Create two modes: Batch mode, single image mode
    * Add ability to resize rectangles.
    * Add ability to draw free hand for semantic segmentation?
    * Add ability to load model in Keras for bounding boxes suggestions.
@@ -12,5 +11,5 @@ Wishlist:
 
 Bugs:
    * Bounding boxes move when trying to zoom inside bounding box.
-   * Buttons move position when image size changes
    * Switching to next image should uncheck all the boxes, except Keras Model
+   * Large images remve grid and buttons from view.
