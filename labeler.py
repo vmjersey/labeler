@@ -47,6 +47,9 @@ class ImageLabeler(wx.App):
         # Frame that will contain image and grid
         self.frame = wx.Frame(None, title='Image Display')
 
+        #What is the display of the monitor
+        self.monitor_size = wx.GetDisplaySize()
+
         # Where does our code live
         self.root_dir = os.path.dirname(os.path.abspath(__file__))
         self.CanvasPanel = wx.Panel(self.frame,
@@ -836,25 +839,44 @@ class ImageLabeler(wx.App):
         '''
             Set the size and position of the pannels based on the images size.
         '''
+
+        grid_width = 425
+        control_height = 70
+        img_pane_max_width = self.monitor_size[0] - grid_width - 10
+        img_pane_max_height = self.monitor_size[1] - control_height - 120
+    
+
+        #Set some common sense things in relation to image widths
         if self.image_shape[1] < 525:
-            min_startx = 525
+            img_pane_width = 525
+        elif self.image_shape[1] > img_pane_max_width:
+            img_pane_width = img_pane_max_width
         else:
-            min_startx = self.image_shape[1]
+            img_pane_width = self.image_shape[1]
+
+        #Set some common sense things in relation to image height
+        if self.image_shape[0] < 525:
+            img_pane_height = 525
+        elif self.image_shape[0] > img_pane_max_height:
+            img_pane_height = img_pane_max_height
+        else:
+            img_pane_height = self.image_shape[0]        
+
 
         self.CanvasPanel.SetPosition((0,0)) 
-        self.CanvasPanel.SetSize((self.image_shape[1],self.image_shape[0]))
+        self.CanvasPanel.SetSize((img_pane_width,img_pane_height))
 
-        self.ControlPanel.SetPosition((0,self.image_shape[0]+5))
-        self.ControlPanel.SetSize((235,70))
+        self.ControlPanel.SetPosition((0,img_pane_height+5))
+        self.ControlPanel.SetSize((235,control_height))
 
-        self.BatchPanel.SetPosition((240,self.image_shape[0]+5))
-        self.BatchPanel.SetSize((125,70))
+        self.BatchPanel.SetPosition((240,img_pane_height+5))
+        self.BatchPanel.SetSize((125,control_height))
 
-        self.BBPanel.SetPosition((min_startx+5,0))
-        self.BBPanel.SetSize((525,self.image_shape[0]))
+        self.BBPanel.SetPosition((img_pane_width+5,0))
+        self.BBPanel.SetSize((grid_width,img_pane_height))
 
-        self.GridControlPanel.SetPosition((min_startx+5,self.image_shape[0]+5))
-        self.GridControlPanel.SetSize((525,70))
+        self.GridControlPanel.SetPosition((img_pane_width+5,img_pane_height+5))
+        self.GridControlPanel.SetSize((grid_width,control_height))
 
 
     def save_grid(self,event):

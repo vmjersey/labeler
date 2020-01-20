@@ -12,4 +12,4 @@ Wishlist:
 Bugs:
    * Bounding boxes move when trying to zoom inside bounding box.
    * Switching to next image should uncheck all the boxes, except Keras Model
-   * Large images remve grid and buttons from view.
+   * When user tries to save grid, tell user grid is empty.	
