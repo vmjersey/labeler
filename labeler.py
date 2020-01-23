@@ -281,7 +281,7 @@ class ImageLabeler(wx.App):
 
         # Frame for image transformations
         self.TransFrame = TransFrame(None,self)
-        
+
         # Frame for image segmentation
         self.SegFrame = SegmentFrame(None,self)
 
@@ -699,6 +699,8 @@ class ImageLabeler(wx.App):
 
         # Delete all rectangles from the canvas
         self.clear_bb()
+        # Uncheck all transformation boxes
+        self.TransFrame.reset_boxes()
 
         # Clear Rectangle List
         self.rect_obj_list = [] 
@@ -853,7 +855,7 @@ class ImageLabeler(wx.App):
             img_pane_width = img_pane_max_width
         else:
             img_pane_width = self.image_shape[1]
-
+        
         #Set some common sense things in relation to image height
         if self.image_shape[0] < 525:
             img_pane_height = 525
@@ -861,6 +863,10 @@ class ImageLabeler(wx.App):
             img_pane_height = img_pane_max_height
         else:
             img_pane_height = self.image_shape[0]        
+
+        #Come up with what the frame size should be
+        frame_width = img_pane_width + grid_width + 10
+        frame_height = img_pane_height + control_height + 90
 
 
         self.CanvasPanel.SetPosition((0,0)) 
@@ -877,7 +883,9 @@ class ImageLabeler(wx.App):
 
         self.GridControlPanel.SetPosition((img_pane_width+5,img_pane_height+5))
         self.GridControlPanel.SetSize((grid_width,control_height))
-
+    
+        #Set Overall frame size
+        self.frame.SetSize((frame_width,frame_height))
 
     def save_grid(self,event):
         '''
