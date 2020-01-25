@@ -28,7 +28,7 @@ class SegmentFrame(wx.Frame):
 
 
 
-        # Checkbox to convert image to gray scale
+        # Checkbox to get contours
         self.hbox = wx.CheckBox(self.SegmentPanel, label='Find Countours', pos=(20,25))
         self.hbox.SetValue(False)
         self.hbox.Bind(wx.EVT_CHECKBOX, self.on_h_check, self.hbox)
@@ -50,9 +50,12 @@ class SegmentFrame(wx.Frame):
         MPsizer.Add(MPTitle, 0, wx.ALL |wx.CENTRE | wx.ALIGN_CENTER_HORIZONTAL)
         self.ModelPanel.SetSizer(MPsizer)
 
-        self.yolobox = wx.CheckBox(self.ModelPanel, label='YOLOv3', pos=(20,25))
+        self.yolobox = wx.CheckBox(self.ModelPanel, label='YOLOv3', pos=(20,30))
         self.yolobox.SetValue(False)
         self.yolobox.Bind(wx.EVT_CHECKBOX, self.on_yolo_check, self.yolobox)
+
+        self.yolobut = wx.Button(self.ModelPanel,label='Run',size=(50,30),pos=(110,30))
+        self.yolobut.Bind(wx.EVT_BUTTON,self.on_yolo_run)
 
         self.yolomodel = None
 
@@ -83,29 +86,44 @@ class SegmentFrame(wx.Frame):
             
             self.parent.canvas.draw()
 
+    def on_yolo_run(self,event):
+        '''
+            Action taken when yolo button is pushed
+        '''
+
+        if self.yolobox.GetValue() == False:
+            # Load model and check box
+            self.yolobox.SetValue(True)
+ 
+        from libs.models.yolo import YOLOv3
+        if self.yolomodel == None:
+            print("Defining YoloV3  model and loading weights")
+            self.yolomodel = YOLOv3(self.parent)
+
+        # Now run predictions
+        time_before = time.time()
+        boxes = self.yolomodel.predict()
+        time_after = time.time()
+        prediction_time = time_after - time_before
+        print("Total Prediction Time:", prediction_time)
+
+        # Draw all the rectangles on canvas
+        for box in boxes:
+            self.parent.draw_rect(box)
+
+        # Populate grid
+        fill_grid(self.parent)
+
+        # Draw bounding boxes on canvas
+        self.parent.canvas.draw()
+
     def on_yolo_check(self,event):
         '''
-            Action taken when box is checked or unchecked
+            Action taken when box is checked or unchecked: load the model but don't run prediction
         '''
         if self.yolobox.GetValue() == True:
             from libs.models.yolo import YOLOv3
             if self.yolomodel == None:
                 print("defining model")
                 self.yolomodel = YOLOv3(self.parent)
-
-            time_before = time.time()
-            boxes = self.yolomodel.predict()
-            time_after = time.time()
-            prediction_time = time_after - time_before
-            print("Total Prediction Time:", prediction_time)
-
-            # Draw all the rectangles on canvas
-            for box in boxes:
-                self.parent.draw_rect(box)
-
-            # Populate grid
-            fill_grid(self.parent)
-
-            self.parent.canvas.draw()
-
 
