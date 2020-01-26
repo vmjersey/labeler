@@ -94,11 +94,10 @@ class SegmentFrame(wx.Frame):
         if self.yolobox.GetValue() == False:
             # Load model and check box
             self.yolobox.SetValue(True)
- 
-        from libs.models.yolo import YOLOv3
-        if self.yolomodel == None:
-            print("Defining YoloV3  model and loading weights")
-            self.yolomodel = YOLOv3(self.parent)
+            from libs.models.yolo import YOLOv3
+            if self.yolomodel == None:
+                print("Defining YoloV3  model and loading weights")
+                self.yolomodel = YOLOv3(self.parent)
 
         # Now run predictions
         time_before = time.time()
