@@ -1,13 +1,4 @@
-from keras.models import load_model
 from imageai.Detection import ObjectDetection
-import cv2
-import numpy as np
-import matplotlib.pyplot as plt
-from numpy import expand_dims
-from matplotlib.patches import Rectangle
-import os
-import time
-import tensorflow as tf
 
 
 # Got the model and weights from here: 
