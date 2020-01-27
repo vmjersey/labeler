@@ -332,7 +332,13 @@ class ImageLabeler(wx.App):
         '''
         self.cursor_mode = "nobb"
         self.toggle_cursor_mode(self.hmbut)
+       
         self.toolbar.home()
+        
+        # Reset axes so they don't get messed up when zooming
+        self.axes.set_xbound(0,self.image_shape[1])
+        self.axes.set_ybound(0,self.image_shape[0])
+
         # Toggle off the zoom and pan buttons
         if self.toolbar._active == 'ZOOM':
             self.toolbar.zoom()
@@ -362,7 +368,7 @@ class ImageLabeler(wx.App):
 
     def next(self,event):
         '''
-            Draw a rectangle on the canvas
+            Move to next image
         '''
         self.cursor_mode = "nobb"
         self.toggle_cursor_mode(self.nextbut)
@@ -392,7 +398,7 @@ class ImageLabeler(wx.App):
 
     def prev(self,event):
         '''
-            Draw a rectangle on the canvas
+            Move to previous image
         '''
         self.cursor_mode = "nobb"
         self.toggle_cursor_mode(self.prevbut)
@@ -712,6 +718,8 @@ class ImageLabeler(wx.App):
         # Refresh the canvas
         self.RefreshImage()
 
+
+
     def ReadImage(self):
         ''' 
             Read image off disk
@@ -734,8 +742,8 @@ class ImageLabeler(wx.App):
         # Set Frame to size of image, plust a little extra
         self.frame.SetSize((self.image_shape[1]+550, self.image_shape[0] + 200))
 
-        self.canvas.SetSize((self.image_shape[1], self.image_shape[0]))
         self.set_panels()
+
 
         # Display the image on the canvas
         self.img_obj = self.axes.imshow(self.current_image,cmap='gray')
@@ -750,17 +758,15 @@ class ImageLabeler(wx.App):
 
         # Set Frame to size of image, plust a little extra
         self.frame.SetSize((self.image_shape[1]+550, self.image_shape[0] + 200))
-        
-        # Set Matplotlib Canvas to size of image
-        self.canvas.SetSize((self.image_shape[1], self.image_shape[0]))
-        self.set_panels()
+
+        self.set_panels()   
 
         # Display the image on the canvas
-        #self.img_obj = self.axes.imshow(self.current_image,cmap='gray')
-        #self.img_obj.set_array(self.current_image)
         self.img_obj.set_extent((0.0,self.image_shape[1],self.image_shape[0],0.0))
         self.img_obj.set_data(self.current_image)
-        self.canvas.draw_idle()
+        self.canvas.draw()
+
+
 
 
     def OnDelete(self):
@@ -886,6 +892,14 @@ class ImageLabeler(wx.App):
     
         #Set Overall frame size
         self.frame.SetSize((frame_width,frame_height))
+
+        self.canvas.SetSize((self.image_shape[1], self.image_shape[0]))
+
+        # Reset axes so they don't get messed up when zooming        
+        self.axes.set_ybound(0,self.image_shape[0])
+        self.axes.set_xbound(0,self.image_shape[1])
+
+
 
     def save_grid(self,event):
         '''

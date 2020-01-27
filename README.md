@@ -11,4 +11,4 @@ Wishlist:
 
 Bugs:
    * Bounding boxes move when trying to zoom inside bounding box.
-   * Zooming into an image causes issues when moving on to the next image of different size.
+

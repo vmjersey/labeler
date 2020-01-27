@@ -209,7 +209,6 @@ class TransFrame(wx.Frame):
 
         # Put old image back
         self.parent.current_image = self.parent.original_image
-        self.parent.RefreshImage()
 
     def on_sx_check(self,e):
         '''
