@@ -3,6 +3,7 @@ Python Image Labeler
 
 
 Dependencies:
+	Python		3.6+
 	Keras 		2.3+
 	Tensorflow 	1.14+
 	wxpython

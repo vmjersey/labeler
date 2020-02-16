@@ -33,7 +33,7 @@ class ImageLabeler(wx.App):
     The Main Application Class
     '''
 
-    def __init__(self,starting_image=None,image_dir=None):
+    def __init__(self,starting_image=None,image_dir=None,conf_dir=None):
 
         wx.App.__init__(self) 
 
@@ -85,7 +85,7 @@ class ImageLabeler(wx.App):
         # Lock to stop the motion event from behaving badly when the mouse isn't pressed
         self.frame.pressed = False
 
-        # Setting up the menu.
+        # Setting up the file menu
         filemenu  = wx.Menu()
         menuAbout = filemenu.Append(wx.ID_ABOUT, "&About", "Information About This Program")
         menuOpenGrid  = filemenu.Append(wx.ID_FILE,  "&Open Grid",  "Open File Containing Bounding Boxes")
@@ -94,22 +94,28 @@ class ImageLabeler(wx.App):
         menuSaveImage = filemenu.Append(wx.ID_SAVEAS,  "&Save Image",  "Save Image")
         menuExit  = filemenu.Append(wx.ID_EXIT,  "&Exit",  "Exit Image Labeler")
         
+        # Setting up the models menu
+        configmenu  = wx.Menu()
+        menuConfigModel = configmenu.Append(wx.ID_ABOUT, "&Models", "Configure Custom Models")
+
+
 
 
         # Creating the menubar.
         menuBar = wx.MenuBar()
         menuBar.Append(filemenu,"&File") # Adding the "filemenu" to the MenuBar
+        menuBar.Append(configmenu,"&Config")
         self.frame.SetMenuBar(menuBar)  # Adding the MenuBar to the Frame content.
 
 
-        # Set events.
+        # Set events for menuBar things
         self.frame.Bind(wx.EVT_MENU, self.OnFileAbout, menuAbout)
         self.frame.Bind(wx.EVT_MENU, self.OnFileOpen, menuOpenImage)
         self.frame.Bind(wx.EVT_MENU, self.OnImportGrid, menuOpenGrid)
         self.frame.Bind(wx.EVT_MENU, self.OnFileExit, menuExit)
         self.frame.Bind(wx.EVT_MENU, self.OnSaveGrid, menuSaveGrid)
         self.frame.Bind(wx.EVT_MENU, self.OnSaveImage, menuSaveImage)
-
+        self.frame.Bind(wx.EVT_MENU, self.OnConfigModel,menuConfigModel)
 
 
         #Keep track of how many images you have displayed
@@ -285,6 +291,10 @@ class ImageLabeler(wx.App):
         # Frame for image segmentation
         self.SegFrame = SegmentFrame(None,self)
 
+        # Frame for configuring models
+        self.ModelFrame = None
+
+
     def OnGridLeft(self,event):
         '''
             Action taken when left click happens on grid
@@ -434,6 +444,9 @@ class ImageLabeler(wx.App):
         self.frame.Destroy()
         self.TransFrame.Close()
         self.SegFrame.Close()
+        if self.ModelFrame != None:
+            self.ModelFrame.Close()
+
 
     def OnImportGrid(self,event):
         '''
@@ -454,6 +467,10 @@ class ImageLabeler(wx.App):
                 self.draw_rect(coord)
 
             self.canvas.draw()
+
+    def OnConfigModel(self,event):
+        self.ModelFrame = ModelFrame(None,self) 
+        
 
     def draw_rect(self,rect):
         if len(rect) > 4:
@@ -922,14 +939,20 @@ class ImageLabeler(wx.App):
 parser = argparse.ArgumentParser(description='A gui to help expedite the labeling of images, namely with bounding boxes.') 
 parser.add_argument('--file', help='Starting file to opened directly by image labeler.')
 parser.add_argument('--imagedir', help='Starting directory, where the labeler will get list of images to be labeled.  If not specified current working direcgtory will be used.')
+parser.add_argument('--confdir', help="Location of the configuration files and custom models for the labeler application.  If not listed application will use default location in users home directory.")
 
 args = parser.parse_args()
 
-# Assign arguments to variables
-image_file=args.file
-image_dir=args.imagedir
 
-app = ImageLabeler(starting_image=image_file,image_dir=image_dir)
+# Assign arguments to variables
+image_file_arg=args.file
+image_dir_arg=args.imagedir
+conf_dir_arg=args.confdir
+
+config = ConfigFile(conf_dir=conf_dir_arg)
+
+
+app = ImageLabeler(starting_image=image_file_arg,image_dir=image_dir_arg,conf_dir=conf_dir_arg)
 app.MainLoop()
 
 
