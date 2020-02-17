@@ -38,13 +38,13 @@ class SegmentFrame(wx.Frame):
         self.SegmentPanel.SetPosition((5,5))
 
 
-         # Create Panel for Applying Model Segmentation
+        # Create Panel for Applying Standard Model Segmentation
         self.ModelPanel = wx.Panel(self,style=wx.BORDER_SUNKEN | wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.CAPTION)
         self.ModelPanel.SetBackgroundColour("dark gray")
 
         MPTitle= wx.StaticText(self.ModelPanel, -1,)
         MPTitle.SetFont(font)
-        MPTitle.SetLabel("Apply Model")
+        MPTitle.SetLabel("Standard Models")
 
         MPsizer = wx.GridSizer(1, 1, 5, 5)
         MPsizer.Add(MPTitle, 0, wx.ALL |wx.CENTRE | wx.ALIGN_CENTER_HORIZONTAL)
@@ -61,6 +61,20 @@ class SegmentFrame(wx.Frame):
 
         self.ModelPanel.SetSize(200,200)
         self.ModelPanel.SetPosition((205,5))
+
+
+        # Create a Panel for applying custom user models
+        self.UserPanel = wx.Panel(self,style=wx.BORDER_SUNKEN | wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.CAPTION)
+        self.UserPanel.SetBackgroundColour("dark gray")
+
+        UPTitle= wx.StaticText(self.UserPanel, -1,)
+        UPTitle.SetFont(font)
+        UPTitle.SetLabel("Custom Models")
+
+        self.UserPanel.SetSize(200,200)
+        self.UserPanel.SetPosition((5,205))
+
+
 
         self.SetSize(415,450)
         self.Show(True)

@@ -8,6 +8,7 @@ from libs.utils import get_list_files
 from libs.utils import check_inside_rect
 from libs.trans import TransFrame
 from libs.segment import SegmentFrame
+from libs.configfile import ConfigFile
 from libs.grid import write_grid_csv,get_grid_list,import_grid_csv,empty_grid,fill_grid,set_grid_edit,highlight_row
 import numpy as np
 import os
@@ -950,7 +951,7 @@ image_dir_arg=args.imagedir
 conf_dir_arg=args.confdir
 
 config = ConfigFile(conf_dir=conf_dir_arg)
-
+print(config.main)
 
 app = ImageLabeler(starting_image=image_file_arg,image_dir=image_dir_arg,conf_dir=conf_dir_arg)
 app.MainLoop()

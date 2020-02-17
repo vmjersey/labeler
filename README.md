@@ -18,7 +18,6 @@ Wishlist:
    * Add ability to draw free hand for semantic segmentation?
    * Add ability to load model in Keras for bounding boxes suggestions.
    * Add ability to have script generate image.
-   * Add support for configuration file.
 
 Bugs:
    * Bounding boxes move when trying to zoom inside bounding box.

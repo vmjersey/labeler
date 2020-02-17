@@ -16,7 +16,7 @@ class ConfigFile():
         self.home = str(Path.home())
         
         # Where does the user want their config files stored
-        self.conf_dir = self.configuration_directory(conf_dir)
+        self.conf_dir = self.config_dir(conf_dir)
 
         #################################
         # Deal with main configurations #
@@ -25,16 +25,15 @@ class ConfigFile():
         self.main_conf = os.path.join(self.conf_dir,"main.conf")
 
         #Main Configuration object filled by main.conf
-        self.main_result = self.configuration_main()
-        if self.main_result == 1:
+        self.main = self.config_file(self.main_conf)
+        if self.main == 1:
             print("Something is wrong with main.conf configuration.")
 
+        
+        
 
 
-
-
-
-    def configuration_directory(self,conf_dir):
+    def config_dir(self,conf_dir):
         '''
             Make sure everything is good with the configuration directory
         '''        
@@ -46,47 +45,51 @@ class ConfigFile():
 
         return conf_dir
 
-    def configuration_main(self):
+    def config_file(self,conf_file):
         '''
-            Make sure main configuration file is good.
+            Make sure configuration file is good.
         '''
         # Check if path exists        
-        if os.path.exists(self.main_conf):
+        if os.path.exists(conf_file):
             # Make sure it is a file, not a directory or symlink
-            if os.path.isfile(self.main_conf):
+            if os.path.isfile(conf_file):
                 # Now create object
-                read_result = self.read_main()
+                read_result = self.read_conf(conf_file)
                 if read_result == 1: # Make sure read was sucessful
                     return 1
                 else:
-                    return 0
+                    return read_result
             else:
                 # Something is not quite right with this path
-                print("Error: Main Configuration file is not a file, ", self.main_conf)
+                print("Error: Main Configuration file is not a file, ", conf_file)
                 return 1
         # Lets create it
         else:
-            write_result = self.create_main_file()
+            write_result=1
+            #Routine for creating new main.conf
+            if conf_file.find("main.conf"):    
+                write_result = self.create_main_conf(conf_file)
+
             if write_result == 1:
-                print("Write of file was unsucessful: ", self.main_conf)
+                print("Write of file was unsucessful: ", conf_file)
                 return 1
             else:
                 return 0            
 
             # Now create object
-            read_result = self.read_main()
+            read_result = self.read_conf(conf_file)
             if read_result == 1:
-                print("Read of file was unsucessful: ", self.main_conf)
+                print("Read of file was unsucessful: ", conf_file)
                 return 1
             else:
-                return 0
+                return read_result
 
-    def create_main_file(self):
+    def create_main_conf(self,conf_file):
         '''
-            Create a Base main.conf
+            Create a new conf file
         '''
 
-        print("Info: Creating new main.conf")
+        print("Info: Creating new ",conf_file)
 
         # Create the configuration file as it doesn't exist yet
 
@@ -96,17 +99,17 @@ class ConfigFile():
         Config.set('global', 'user', getpass.getuser())
 
         try:
-            cfgfile = open(self.main_conf, 'w')
+            cfgfile = open(conf_file, 'w')
             # write the configuration file
             Config.write(cfgfile)
             cfgfile.close()
             return 0
         except:
-            print("Could not create configuration file: ",self.main_conf)
+            print("Could not create configuration file: ",conf_file)
             return 1
 
 
-    def read_main(self):
+    def read_conf(self,conf_file):
         '''
             Read main configuration file into object
         '''
@@ -114,10 +117,11 @@ class ConfigFile():
         # Parse Configs
         try:
             config = configparser.ConfigParser()
-            config.read(self.main_conf)
+            config.read(conf_file)
         except:
-            print("Could not parse configuration file: ",self.main_conf)
+            print("Could not parse configuration file: ", conf_file)
             return 1
 
+        return config
 
 
