@@ -1,6 +1,6 @@
 import csv
 import os
-from libs.utils import get_rect_coords
+from labeler.utils import get_rect_coords
 
 
 

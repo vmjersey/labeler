@@ -1,4 +1,5 @@
-mport setuptools
+import setuptools
+from glob import glob
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -12,8 +13,19 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="<https://github.com/vmjersey/labeler.git>",
-    packages=setuptools.find_packages(),
+    packages=["labeler","labeler.models"],
+    include_package_data=True,
+    package_data={
+            # If any package contains *.txt or *.rst files, include them:
+            "": ["*.jpg","icons/*.png"]
+                },
+    #data_files=[('share/',  glob('icons/*'))],
+    scripts=['img_label.py'],
     python_requires='>=3.6',
-	install_requires=["wxpython","opencv-python","shapely"],
+	install_requires=[
+        "wxpython",
+        "opencv-python",
+        "shapely"
+        ],
 )
 

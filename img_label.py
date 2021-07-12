@@ -3,13 +3,14 @@
 import wx
 import wx.grid as gridlib
 import wx.lib.agw.buttonpanel as BP
-from libs.imaging import convert_bw,convert_gs,read_image_as_bitmap,write_image
-from libs.utils import get_list_files
-from libs.utils import check_inside_rect
-from libs.trans import TransFrame
-from libs.segment import SegmentFrame
-from libs.configfile import ConfigFile
-from libs.grid import write_grid_csv,get_grid_list,import_grid_csv,empty_grid,fill_grid,set_grid_edit,highlight_row
+import labeler
+from labeler.imaging import convert_bw,convert_gs,read_image_as_bitmap,write_image
+from labeler.utils import get_list_files
+from labeler.utils import check_inside_rect
+from labeler.trans import TransFrame
+from labeler.segment import SegmentFrame
+from labeler.configfile import ConfigFile
+from labeler.grid import write_grid_csv,get_grid_list,import_grid_csv,empty_grid,fill_grid,set_grid_edit,highlight_row
 import numpy as np
 import os
 import cv2
@@ -25,6 +26,7 @@ from matplotlib.backends.backend_wxagg import NavigationToolbar2WxAgg as Navigat
 import matplotlib.pyplot as plt
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
+from pathlib import Path
 
 matplotlib.use('WXAgg')
 
@@ -38,6 +40,7 @@ class ImageLabeler(wx.App):
 
         wx.App.__init__(self) 
 
+        self.labeler_dir = labeler.__path__[0]
         self.starting_image = starting_image
         self.image_dir = image_dir
         
@@ -52,7 +55,7 @@ class ImageLabeler(wx.App):
         self.monitor_size = wx.GetDisplaySize()
 
         # Where does our code live
-        self.root_dir = os.path.dirname(os.path.abspath(__file__))
+        self.bin_dir = os.path.dirname(os.path.abspath(__file__))
         self.CanvasPanel = wx.Panel(self.frame,
                     style=wx.BORDER_SUNKEN | wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.CAPTION)
         self.CanvasPanel.SetBackgroundColour("dark gray")
@@ -139,8 +142,8 @@ class ImageLabeler(wx.App):
         if self.starting_image != None: #use the one specified on the command line.
             self.imagepath = self.starting_image
         elif self.labeler_mode == "single": #Just use the default application image
-            print("Info: Using application default image:", self.root_dir +"/image.jpg")
-            self.imagepath = self.root_dir +"/image.jpg"
+            print("Info: Using application default image:", self.labeler_dir +"/image.jpg")
+            self.imagepath = self.labeler_dir +"/image.jpg"
 
         elif self.labeler_mode == "batch":
             print("Info: Starting labeler in batch mode, multiple images detected.")
@@ -189,28 +192,28 @@ class ImageLabeler(wx.App):
         self.button_list = []
 
         self.sibut = wx.Button(self.ControlPanel,-1,size=(50,50),pos=(5,5))
-        zoom_img = wx.Image(self.root_dir + '/icons/zoom.png', wx.BITMAP_TYPE_ANY)
+        zoom_img = wx.Image(self.labeler_dir + '/icons/zoom.png', wx.BITMAP_TYPE_ANY)
         zoom_img = zoom_img.Scale(20,20)
         self.sibut.SetBitmap(wx.Bitmap(zoom_img))
         self.sibut.Bind(wx.EVT_BUTTON,self.zoom)
         self.button_list.append(self.sibut)
          
         self.hmbut = wx.Button(self.ControlPanel,-1,size=(50,50),pos=(60,5))
-        home_img = wx.Image(self.root_dir + '/icons/home.png', wx.BITMAP_TYPE_ANY)
+        home_img = wx.Image(self.labeler_dir + '/icons/home.png', wx.BITMAP_TYPE_ANY)
         home_img = home_img.Scale(20,20)
         self.hmbut.SetBitmap(wx.Bitmap(home_img))
         self.hmbut.Bind(wx.EVT_BUTTON,self.home)
         self.button_list.append(self.hmbut)
  
         self.hibut = wx.Button(self.ControlPanel,-1,size=(50,50),pos=(115,5))
-        pan_img = wx.Image(self.root_dir + '/icons/pan.png', wx.BITMAP_TYPE_ANY)
+        pan_img = wx.Image(self.labeler_dir + '/icons/pan.png', wx.BITMAP_TYPE_ANY)
         pan_img = pan_img.Scale(20,20)
         self.hibut.SetBitmap(wx.Bitmap(pan_img))
         self.hibut.Bind(wx.EVT_BUTTON,self.pan)
         self.button_list.append(self.hibut)
 
         self.plotbut = wx.Button(self.ControlPanel,-1,size=(50,50),pos=(170,5))
-        box_img = wx.Image(self.root_dir + '/icons/bbox.png', wx.BITMAP_TYPE_ANY)
+        box_img = wx.Image(self.labeler_dir + '/icons/bbox.png', wx.BITMAP_TYPE_ANY)
         box_img = box_img.Scale(20,20)
         self.plotbut.SetBitmap(wx.Bitmap(box_img))
         self.plotbut.Bind(wx.EVT_BUTTON,self.plot)
@@ -226,13 +229,13 @@ class ImageLabeler(wx.App):
 
 
         self.prevbut = wx.Button(self.BatchPanel,-1,size=(50,50),pos=(7,5))
-        box_img = wx.Image(self.root_dir + '/icons/left_arrow.png', wx.BITMAP_TYPE_ANY)
+        box_img = wx.Image(self.labeler_dir + '/icons/left_arrow.png', wx.BITMAP_TYPE_ANY)
         box_img = box_img.Scale(20,20)
         self.prevbut.SetBitmap(wx.Bitmap(box_img))
         self.prevbut.Bind(wx.EVT_BUTTON,self.prev)
 
         self.nextbut = wx.Button(self.BatchPanel,-1,size=(50,50),pos=(60,5))
-        box_img = wx.Image(self.root_dir + '/icons/right_arrow.png', wx.BITMAP_TYPE_ANY)
+        box_img = wx.Image(self.labeler_dir + '/icons/right_arrow.png', wx.BITMAP_TYPE_ANY)
         box_img = box_img.Scale(20,20)
         self.nextbut.SetBitmap(wx.Bitmap(box_img))
         self.nextbut.Bind(wx.EVT_BUTTON,self.next)
@@ -253,21 +256,21 @@ class ImageLabeler(wx.App):
 
         # Button to import csv file with bounding boxes
         self.imbut = wx.Button(self.GridControlPanel,-1,size=(50,50),pos=(5,5))
-        imp_img = wx.Image(self.root_dir + '/icons/import.png', wx.BITMAP_TYPE_ANY)
+        imp_img = wx.Image(self.labeler_dir + '/icons/import.png', wx.BITMAP_TYPE_ANY)
         imp_img = imp_img.Scale(20,20)
         self.imbut.SetBitmap(wx.Bitmap(imp_img))
         self.imbut.Bind(wx.EVT_BUTTON,self.OnImportGrid)
 
         # Button to save grid to csv file
         self.grsavebut = wx.Button(self.GridControlPanel,-1,size=(50,50),pos=(60,5))
-        save_img = wx.Image(self.root_dir + '/icons/filesave.png', wx.BITMAP_TYPE_ANY)
+        save_img = wx.Image(self.labeler_dir + '/icons/filesave.png', wx.BITMAP_TYPE_ANY)
         save_img = save_img.Scale(20,20)
         self.grsavebut.SetBitmap(wx.Bitmap(save_img))
         self.grsavebut.Bind(wx.EVT_BUTTON,self.save_grid)
 
         # Button to delete grid and bounding boxes
         self.grdelbut = wx.Button(self.GridControlPanel,-1,size=(50,50),pos=(115,5))
-        del_img = wx.Image(self.root_dir + '/icons/delete_all.png', wx.BITMAP_TYPE_ANY)
+        del_img = wx.Image(self.labeler_dir + '/icons/delete_all.png', wx.BITMAP_TYPE_ANY)
         del_img = del_img.Scale(20,20)
         self.grdelbut.SetBitmap(wx.Bitmap(del_img))
         self.grdelbut.Bind(wx.EVT_BUTTON,self.clear_bb)

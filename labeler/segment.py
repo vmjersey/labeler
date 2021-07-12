@@ -1,6 +1,6 @@
 import wx
-from libs.imaging import find_contours
-from libs.grid import fill_grid
+from labeler.imaging import find_contours
+from labeler.grid import fill_grid
 from matplotlib.patches import Rectangle
 import time
 
@@ -108,7 +108,7 @@ class SegmentFrame(wx.Frame):
         if self.yolobox.GetValue() == False:
             # Load model and check box
             self.yolobox.SetValue(True)
-            from libs.models.yolo import YOLOv3
+            from labeler.models.yolo import YOLOv3
             if self.yolomodel == None:
                 print("Defining YoloV3  model and loading weights")
                 self.yolomodel = YOLOv3(self.parent)
@@ -135,7 +135,7 @@ class SegmentFrame(wx.Frame):
             Action taken when box is checked or unchecked: load the model but don't run prediction
         '''
         if self.yolobox.GetValue() == True:
-            from libs.models.yolo import YOLOv3
+            from labeler.models.yolo import YOLOv3
             if self.yolomodel == None:
                 print("defining model")
                 self.yolomodel = YOLOv3(self.parent)

@@ -1,5 +1,5 @@
 from imageai.Detection import ObjectDetection
-
+import labeler
 
 # Got the model and weights from here: 
 # https://machinelearningmastery.com/how-to-perform-object-detection-with-yolov3-in-keras/
@@ -10,13 +10,14 @@ class YOLOv3():
     '''
 
     def __init__(self,parent):
-
+    
+        self.models_path = labeler.__path__
         self.parent = parent 
 
         self.detector = ObjectDetection()
         self.detector.setModelTypeAsYOLOv3()
         
-        self.detector.setModelPath(self.parent.root_dir+"/libs/models/yolov3.h5")
+        self.detector.setModelPath(self.models_path + "/models/yolov3.h5")
         
         self.detector.loadModel()
 

@@ -1,5 +1,5 @@
 import wx
-from libs.imaging import convert_bw,convert_gs,extract_fg,extract_bg,average_filtering,gaussian_filtering,median_filtering,bilateral_filtering,erosion_morph,dilation_morph,open_morph,closing_morph,gradient_morph,laplacian_morph,sobelx_morph,sobely_morph,convert_canny,convert_watershed
+from labeler.imaging import convert_bw,convert_gs,extract_fg,extract_bg,average_filtering,gaussian_filtering,median_filtering,bilateral_filtering,erosion_morph,dilation_morph,open_morph,closing_morph,gradient_morph,laplacian_morph,sobelx_morph,sobely_morph,convert_canny,convert_watershed
 
 
 class TransFrame(wx.Frame):
