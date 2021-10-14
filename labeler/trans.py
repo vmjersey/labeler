@@ -15,10 +15,10 @@ class TransFrame(wx.Frame):
         self.ColorPanel = wx.Panel(self,style=wx.BORDER_SUNKEN | wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.CAPTION)
         self.ColorPanel.SetBackgroundColour("dark gray")
 
-        CPTitle= wx.StaticText(self.ColorPanel, -1,)
+        CPTitle= wx.StaticText(self.ColorPanel, -1,style = wx.ALIGN_CENTER,size=(100,30))
         font = wx.Font(18, wx.DECORATIVE, wx.ITALIC, wx.NORMAL)
         CPTitle.SetFont(font)
-        CPTitle.SetLabel("Color Options")
+        CPTitle.SetLabel("Color")
        
         CPsizer = wx.GridSizer(1, 1, 5, 5)
         CPsizer.Add(CPTitle, 0, wx.ALL |wx.CENTRE | wx.ALIGN_CENTER_HORIZONTAL)
@@ -45,7 +45,7 @@ class TransFrame(wx.Frame):
         self.ExtractionPanel = wx.Panel(self,style=wx.BORDER_SUNKEN | wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.CAPTION)
         self.ExtractionPanel.SetBackgroundColour("dark gray")
 
-        EPTitle= wx.StaticText(self.ExtractionPanel, -1,style = wx.ALIGN_CENTER)
+        EPTitle= wx.StaticText(self.ExtractionPanel, -1,style = wx.ALIGN_CENTER,size=(150,30))
         EPTitle.SetFont(font)
         EPTitle.SetLabel("Extraction")
 
@@ -75,8 +75,6 @@ class TransFrame(wx.Frame):
         self.wsbox.Bind(wx.EVT_CHECKBOX, self.on_ws_check, self.wsbox)
 
 
-
-
         self.ExtractionPanel.SetSize(200,200)
         self.ExtractionPanel.SetPosition((205,5))
 
@@ -85,7 +83,7 @@ class TransFrame(wx.Frame):
         self.BlurPanel = wx.Panel(self,style=wx.BORDER_SUNKEN | wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.CAPTION)
         self.BlurPanel.SetBackgroundColour("dark gray")
 
-        BPTitle= wx.StaticText(self.BlurPanel, -1,style = wx.ALIGN_CENTER)
+        BPTitle= wx.StaticText(self.BlurPanel, -1,style = wx.ALIGN_CENTER,size=(100,30))
         BPsizer = wx.GridSizer(1, 1, 5, 5)
         BPsizer.Add(BPTitle, 0, wx.ALL |wx.CENTRE | wx.ALIGN_CENTER_HORIZONTAL)
         self.BlurPanel.SetSizer(BPsizer)
@@ -125,7 +123,7 @@ class TransFrame(wx.Frame):
         self.MorphPanel.SetBackgroundColour("dark gray")
        
         #Set title in center 
-        MPTitle= wx.StaticText(self.MorphPanel, -1,style = wx.ALIGN_CENTER)
+        MPTitle= wx.StaticText(self.MorphPanel, -1,style = wx.ALIGN_CENTER,size=(200,30))
         MPsizer = wx.GridSizer(1, 1, 5, 5)
         MPsizer.Add(MPTitle, 0, wx.ALL |wx.CENTRE | wx.ALIGN_CENTER_HORIZONTAL)
         self.MorphPanel.SetSizer(MPsizer)

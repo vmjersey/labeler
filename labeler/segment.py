@@ -17,10 +17,10 @@ class SegmentFrame(wx.Frame):
         self.SegmentPanel = wx.Panel(self,style=wx.BORDER_SUNKEN | wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.CAPTION)
         self.SegmentPanel.SetBackgroundColour("dark gray")
 
-        SPTitle= wx.StaticText(self.SegmentPanel, -1,)
+        SPTitle= wx.StaticText(self.SegmentPanel, -1,style=wx.ALIGN_CENTER,size=(100,30))
         font = wx.Font(18, wx.DECORATIVE, wx.ITALIC, wx.NORMAL)
         SPTitle.SetFont(font)
-        SPTitle.SetLabel("Suggest Labels")
+        SPTitle.SetLabel("Edges")
        
         SPsizer = wx.GridSizer(1, 1, 5, 5)
         SPsizer.Add(SPTitle, 0, wx.ALL |wx.CENTRE | wx.ALIGN_CENTER_HORIZONTAL)
@@ -42,9 +42,9 @@ class SegmentFrame(wx.Frame):
         self.ModelPanel = wx.Panel(self,style=wx.BORDER_SUNKEN | wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.CAPTION)
         self.ModelPanel.SetBackgroundColour("dark gray")
 
-        MPTitle= wx.StaticText(self.ModelPanel, -1,)
+        MPTitle= wx.StaticText(self.ModelPanel, -1,size=(100,30))
         MPTitle.SetFont(font)
-        MPTitle.SetLabel("Standard Models")
+        MPTitle.SetLabel("Models")
 
         MPsizer = wx.GridSizer(1, 1, 5, 5)
         MPsizer.Add(MPTitle, 0, wx.ALL |wx.CENTRE | wx.ALIGN_CENTER_HORIZONTAL)
@@ -67,9 +67,9 @@ class SegmentFrame(wx.Frame):
         self.UserPanel = wx.Panel(self,style=wx.BORDER_SUNKEN | wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.CAPTION)
         self.UserPanel.SetBackgroundColour("dark gray")
 
-        UPTitle= wx.StaticText(self.UserPanel, -1,)
+        UPTitle= wx.StaticText(self.UserPanel, -1,style=wx.ALIGN_CENTER,size=(100,30))
         UPTitle.SetFont(font)
-        UPTitle.SetLabel("Custom Models")
+        UPTitle.SetLabel("Custom")
 
         self.UserPanel.SetSize(200,200)
         self.UserPanel.SetPosition((5,205))
