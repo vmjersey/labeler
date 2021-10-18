@@ -354,10 +354,11 @@ class ImageLabeler(wx.App):
         self.axes.set_ybound(0,self.image_shape[0])
 
         # Toggle off the zoom and pan buttons
-        if self.toolbar._active == 'ZOOM':
-            self.toolbar.zoom()
-        elif self.toolbar._active == 'PAN':
-            self.toolbar.pan()
+        if hasattr(self.toolbar,"_active"):
+            if self.toolbar._active == 'ZOOM':
+                self.toolbar.zoom()
+            elif self.toolbar._active == 'PAN':
+                self.toolbar.pan()
  
     def pan(self,event):
         '''
@@ -374,11 +375,13 @@ class ImageLabeler(wx.App):
         self.cursor_mode = "bb"
         self.toggle_cursor_mode(self.plotbut)
         # Set Crosshair as mouse cursor.
-        # Toggle off zoom and pan buttons
-        if self.toolbar._active == 'ZOOM':
-            self.toolbar.zoom()
-        elif self.toolbar._active == 'PAN':
-            self.toolbar.pan() 
+        # Toggle off zoom and pan button
+        # Toggle off the zoom and pan buttons
+        if hasattr(self.toolbar,"_active"):
+            if self.toolbar._active == 'ZOOM':
+                self.toolbar.zoom()
+            elif self.toolbar._active == 'PAN':
+                self.toolbar.pan()
 
     def next(self,event):
         '''
@@ -784,9 +787,12 @@ class ImageLabeler(wx.App):
 
         # Display the image on the canvas
         self.img_obj.set_extent((0.0,self.image_shape[1],self.image_shape[0],0.0))
+
+        self.BasicRefresh()
+
+    def BasicRefresh(self):
         self.img_obj.set_data(self.current_image)
         self.canvas.draw()
-
 
 
 

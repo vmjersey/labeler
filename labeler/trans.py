@@ -207,6 +207,9 @@ class TransFrame(wx.Frame):
 
         # Put old image back
         self.parent.current_image = self.parent.original_image
+        #self.parent.RefreshImage()
+        # reload
+        self.parent.BasicRefresh()
 
     def on_sx_check(self,e):
         '''
@@ -216,8 +219,8 @@ class TransFrame(wx.Frame):
         # If uncheck convert back to original image
         if self.sxbox.GetValue() == True:
             self.parent.current_image = sobelx_morph(self.parent.current_image)
-            # You're goint to want to uncheck the bwbox too
-            self.parent.RefreshImage()
+            # reload  
+            self.parent.BasicRefresh()
         else:
             self.reset_boxes()
 
@@ -229,9 +232,8 @@ class TransFrame(wx.Frame):
         # If uncheck convert back to original image
         if self.sybox.GetValue() == True:
             self.parent.current_image = sobely_morph(self.parent.current_image)
-            # You're goint to want to uncheck the bwbox too
-            self.parent.RefreshImage()
-
+            # reload  
+            self.parent.BasicRefresh()
         else:
             self.reset_boxes()
 
@@ -244,8 +246,8 @@ class TransFrame(wx.Frame):
         # If uncheck convert back to original image
         if self.lmbox.GetValue() == True:
             self.parent.current_image = laplacian_morph(self.parent.current_image)
-            # You're goint to want to uncheck the bwbox too
-            self.parent.RefreshImage()
+            # reload  
+            self.parent.BasicRefresh()
         else:
             self.reset_boxes()
 
@@ -258,8 +260,8 @@ class TransFrame(wx.Frame):
         # If uncheck convert back to original image
         if self.cmbox.GetValue() == True:
             self.parent.current_image = closing_morph(self.parent.current_image)
-            # You're goint to want to uncheck the bwbox too
-            self.parent.RefreshImage()
+            # reload  
+            self.parent.BasicRefresh()
         else:
             self.reset_boxes()
 
@@ -272,8 +274,8 @@ class TransFrame(wx.Frame):
         # If uncheck convert back to original image
         if self.gmbox.GetValue() == True:
             self.parent.current_image = gradient_morph(self.parent.current_image)
-            # You're goint to want to uncheck the bwbox too
-            self.parent.RefreshImage()
+            # reload  
+            self.parent.BasicRefresh()
         else:
             self.reset_boxes()
 
@@ -285,8 +287,9 @@ class TransFrame(wx.Frame):
         # If uncheck convert back to original image
         if self.ombox.GetValue() == True:
             self.parent.current_image = open_morph(self.parent.current_image)
-            # You're goint to want to uncheck the bwbox too
-            self.parent.RefreshImage()
+
+            # reload  
+            self.parent.BasicRefresh()
         else:
             self.reset_boxes()
 
@@ -299,8 +302,8 @@ class TransFrame(wx.Frame):
         # If uncheck convert back to original image
         if self.dmbox.GetValue() == True:
             self.parent.current_image = dilation_morph(self.parent.current_image)
-            # You're goint to want to uncheck the bwbox too
-            self.parent.RefreshImage()
+            # reload  
+            self.parent.BasicRefresh()
         else:
             self.reset_boxes()
 
@@ -312,8 +315,9 @@ class TransFrame(wx.Frame):
         # If uncheck convert back to original image
         if self.embox.GetValue() == True:
             self.parent.current_image = erosion_morph(self.parent.current_image)
-            # You're goint to want to uncheck the bwbox too
-            self.parent.RefreshImage()
+            
+            # reload  
+            self.parent.BasicRefresh()
         else:
             self.reset_boxes()
 
@@ -326,8 +330,8 @@ class TransFrame(wx.Frame):
         # If uncheck convert back to original image
         if self.bfbox.GetValue() == True:
             self.parent.current_image = bilateral_filtering(self.parent.current_image)
-            # You're goint to want to uncheck the bwbox too
-            self.parent.RefreshImage()
+            # reload  
+            self.parent.BasicRefresh()
         else:
             self.reset_boxes()
 
@@ -339,8 +343,8 @@ class TransFrame(wx.Frame):
         # If uncheck convert back to original image
         if self.mfbox.GetValue() == True:
             self.parent.current_image = median_filtering(self.parent.current_image)
-            # You're goint to want to uncheck the bwbox too
-            self.parent.RefreshImage()
+            # reload  
+            self.parent.BasicRefresh()
         else:
             self.reset_boxes()
 
@@ -352,8 +356,8 @@ class TransFrame(wx.Frame):
         # If uncheck convert back to original image
         if self.gfbox.GetValue() == True:
             self.parent.current_image = gaussian_filtering(self.parent.current_image)
-            # You're goint to want to uncheck the bwbox too
-            self.parent.RefreshImage()
+            # reload  
+            self.parent.BasicRefresh()
         else:
             self.reset_boxes()
 
@@ -365,8 +369,8 @@ class TransFrame(wx.Frame):
         # If uncheck convert back to original image
         if self.afbox.GetValue() == True:
             self.parent.current_image = average_filtering(self.parent.current_image)
-            # You're goint to want to uncheck the bwbox too
-            self.parent.RefreshImage()
+            # reload  
+            self.parent.BasicRefresh()
         else:
             self.reset_boxes()
 
@@ -378,8 +382,8 @@ class TransFrame(wx.Frame):
         # If uncheck convert back to original image
         if self.bgbox.GetValue() == True:
             self.parent.current_image = extract_bg(self.parent.current_image)
-            # You're goint to want to uncheck the bwbox too
-            self.parent.RefreshImage()
+            # reload  
+            self.parent.BasicRefresh()
         else:
             self.reset_boxes()
 
@@ -391,8 +395,8 @@ class TransFrame(wx.Frame):
         # If uncheck convert back to original image
         if self.fgbox.GetValue() == True:
             self.parent.current_image = extract_fg(self.parent.current_image)
-            # You're goint to want to uncheck the bwbox too
-            self.parent.RefreshImage()
+            # reload  
+            self.parent.BasicRefresh()
         else:
             self.reset_boxes()
 
@@ -404,9 +408,8 @@ class TransFrame(wx.Frame):
         # If uncheck convert back to original image
         if self.gsbox.GetValue() == True:
             self.parent.current_image = convert_gs(self.parent,self.parent.current_image)
-            # You're goint to want to uncheck the bwbox too
-            #self.bwbox.SetValue(False)
-            self.parent.RefreshImage()
+            # reload  
+            self.parent.BasicRefresh()
         else:
             self.reset_boxes()
 
@@ -418,9 +421,8 @@ class TransFrame(wx.Frame):
         # If uncheck convert back to original image
         if self.bwbox.GetValue() == True:
             self.parent.current_image = convert_bw(self.parent.current_image)
-            # You're going to want to uncheck gsbox too
-            #self.gsbox.SetValue(False)
-            self.parent.RefreshImage()
+            # reload  
+            self.parent.BasicRefresh()
         else:
             self.reset_boxes()
 
@@ -432,9 +434,8 @@ class TransFrame(wx.Frame):
         # If uncheck convert back to original image
         if self.cbox.GetValue() == True:
             self.parent.current_image = convert_canny(self.parent,self.parent.current_image)
-            # You're going to want to uncheck gsbox too
-            #self.gsbox.SetValue(False)
-            self.parent.RefreshImage()
+            # reload  
+            self.parent.BasicRefresh()
         else:
             self.reset_boxes()
 
@@ -446,9 +447,8 @@ class TransFrame(wx.Frame):
         # If uncheck convert back to original image
         if self.wsbox.GetValue() == True:
             self.parent.current_image = convert_watershed(self.parent,self.parent.current_image)
-            # You're going to want to uncheck gsbox too
-            #self.gsbox.SetValue(False)
-            self.parent.RefreshImage()
+            # reload  
+            self.parent.BasicRefresh()
 
         else:
             self.reset_boxes()
