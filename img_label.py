@@ -188,31 +188,34 @@ class ImageLabeler(wx.App):
         self.ControlBox.Add(self.ControlPanel)
         self.ControlPanel.SetBackgroundColour("dark gray")
 
+
         # Create Buttons to help label image
         self.button_list = []
 
-        self.sibut = wx.Button(self.ControlPanel,-1,size=(50,50),pos=(5,5))
+        self.selected_button = "HOME"
+
+        self.sibut = wx.Button(self.ControlPanel,-1,size=(50,50),pos=(5,5),name="zoom")
         zoom_img = wx.Image(self.labeler_dir + '/icons/zoom.png', wx.BITMAP_TYPE_ANY)
         zoom_img = zoom_img.Scale(20,20)
         self.sibut.SetBitmap(wx.Bitmap(zoom_img))
         self.sibut.Bind(wx.EVT_BUTTON,self.zoom)
         self.button_list.append(self.sibut)
          
-        self.hmbut = wx.Button(self.ControlPanel,-1,size=(50,50),pos=(60,5))
+        self.hmbut = wx.Button(self.ControlPanel,-1,size=(50,50),pos=(60,5),name="home")
         home_img = wx.Image(self.labeler_dir + '/icons/home.png', wx.BITMAP_TYPE_ANY)
         home_img = home_img.Scale(20,20)
         self.hmbut.SetBitmap(wx.Bitmap(home_img))
         self.hmbut.Bind(wx.EVT_BUTTON,self.home)
         self.button_list.append(self.hmbut)
  
-        self.hibut = wx.Button(self.ControlPanel,-1,size=(50,50),pos=(115,5))
+        self.hibut = wx.Button(self.ControlPanel,-1,size=(50,50),pos=(115,5),name="pan")
         pan_img = wx.Image(self.labeler_dir + '/icons/pan.png', wx.BITMAP_TYPE_ANY)
         pan_img = pan_img.Scale(20,20)
         self.hibut.SetBitmap(wx.Bitmap(pan_img))
         self.hibut.Bind(wx.EVT_BUTTON,self.pan)
         self.button_list.append(self.hibut)
 
-        self.plotbut = wx.Button(self.ControlPanel,-1,size=(50,50),pos=(170,5))
+        self.plotbut = wx.Button(self.ControlPanel,-1,size=(50,50),pos=(170,5),name="bbox")
         box_img = wx.Image(self.labeler_dir + '/icons/bbox.png', wx.BITMAP_TYPE_ANY)
         box_img = box_img.Scale(20,20)
         self.plotbut.SetBitmap(wx.Bitmap(box_img))
@@ -319,15 +322,18 @@ class ImageLabeler(wx.App):
             self.OnDelete()
 
 
-    def toggle_cursor_mode(self,button):
+    def toggle_cursor_mode(self,button,name):
         '''  
-            Change cursor_mode between bb and toolbar 
-            Changes button color
+            Change cursor_mode between bb and rest toolbar 
+            Hides active button
         '''
 
         for butt in self.button_list:
             if button == butt:
-                butt.Hide()
+                if name == "home":  # This one doesn't need to be hidden
+                    next
+                else:
+                    butt.Hide()
             else:
                 butt.Show()
         
@@ -337,15 +343,44 @@ class ImageLabeler(wx.App):
             Use Matplotlibs zoom tool
         '''
         self.cursor_mode = "nobb"
-        self.toggle_cursor_mode(self.sibut)
+       
+        self.toggle_cursor_mode(self.sibut,"zoom")
         self.toolbar.zoom()
- 
+        # Toggle off other buttons
+        if self.selected_button == 'HOME':
+            self.toolbar.home()
+        elif self.selected_button == 'PAN':
+            self.toolbar.pan()
+        elif self.selected_button == 'PLOT`':
+            self.toolbar.plot()
+
+        self.selected_button = "ZOOM"
+
+
+    def toggle_off_mode(self):
+        ''' 
+           Turn off any button that is selected
+        '''
+
+        # Toggle off other buttons
+        if self.selected_button == 'ZOOM':
+            self.toolbar.zoom()
+        elif self.selected_button == 'PAN':
+            self.toolbar.pan()
+        elif self.selected_button == 'PLOT`':
+            self.toolbar.plot()
+        elif self.selected_button == 'HOME':
+            self.toolbar.home()
+
+        
+
+
     def home(self,event):
         '''
             Return view back to original position
         '''
         self.cursor_mode = "nobb"
-        self.toggle_cursor_mode(self.hmbut)
+        self.toggle_cursor_mode(self.hmbut,"home")
        
         self.toolbar.home()
         
@@ -353,42 +388,41 @@ class ImageLabeler(wx.App):
         self.axes.set_xbound(0,self.image_shape[1])
         self.axes.set_ybound(0,self.image_shape[0])
 
-        # Toggle off the zoom and pan buttons
-        if hasattr(self.toolbar,"_active"):
-            if self.toolbar._active == 'ZOOM':
-                self.toolbar.zoom()
-            elif self.toolbar._active == 'PAN':
-                self.toolbar.pan()
+        self.toggle_off_mode()
+        self.selected_button = "HOME"
+
  
     def pan(self,event):
         '''
             Uses Matplotlibs pan tool
         '''
         self.cursor_mode = "nobb"
-        self.toggle_cursor_mode(self.hibut)
+        self.toggle_cursor_mode(self.hibut,"pan")
         self.toolbar.pan()
+  
+        self.toggle_off_mode()
+        self.selected_button = "PAN"
+
+
 
     def plot(self,event):
         '''
             Draw a rectangle on the canvas
         '''
         self.cursor_mode = "bb"
-        self.toggle_cursor_mode(self.plotbut)
+        self.toggle_cursor_mode(self.plotbut,"plot")
         # Set Crosshair as mouse cursor.
-        # Toggle off zoom and pan button
-        # Toggle off the zoom and pan buttons
-        if hasattr(self.toolbar,"_active"):
-            if self.toolbar._active == 'ZOOM':
-                self.toolbar.zoom()
-            elif self.toolbar._active == 'PAN':
-                self.toolbar.pan()
+
+        self.toggle_off_mode()
+        self.selected_button = "PLOT"
+
 
     def next(self,event):
         '''
             Move to next image
         '''
         self.cursor_mode = "nobb"
-        self.toggle_cursor_mode(self.nextbut)
+        self.toggle_cursor_mode(self.nextbut,"next")
 
         # Find Out which image you are currently on in self.images_obj
         i=0
@@ -418,7 +452,7 @@ class ImageLabeler(wx.App):
             Move to previous image
         '''
         self.cursor_mode = "nobb"
-        self.toggle_cursor_mode(self.prevbut)
+        self.toggle_cursor_mode(self.prevbut,"prev")
         # Find Out which image you are currently on in self.images_obj
         i=0
         for obj in self.images_obj:
