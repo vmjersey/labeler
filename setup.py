@@ -25,7 +25,10 @@ setuptools.setup(
 	install_requires=[
         "wxpython",
         "opencv-python",
-        "shapely"
+        "shapely",
+	"scipy",
+	"matplotlib",
+	"scikit-learn",
         ],
 )
 

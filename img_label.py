@@ -30,7 +30,6 @@ from pathlib import Path
 
 matplotlib.use('WXAgg')
 
-
 class ImageLabeler(wx.App):
     '''
     The Main Application Class
@@ -932,8 +931,8 @@ class ImageLabeler(wx.App):
             img_pane_height = self.image_shape[0]        
 
         #Come up with what the frame size should be
-        frame_width = img_pane_width + grid_width + 10
-        frame_height = img_pane_height + control_height + 90
+        frame_width = img_pane_width + grid_width + 35
+        frame_height = img_pane_height + control_height + 140
 
 
         self.CanvasPanel.SetPosition((0,0)) 

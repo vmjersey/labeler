@@ -1,7 +1,7 @@
 FROM fedora:39
 
 #Install O.S. Dependencies
-RUN dnf install git wget wxGTK-devel gcc g++ which -y
+RUN dnf install git wget wxGTK-devel gcc g++ which xauth firefox xeyes xclock -y
 
 #Install Anaconda
 RUN mkdir -p /opt/conda \
@@ -10,7 +10,8 @@ RUN mkdir -p /opt/conda \
 
 ENV PATH="/opt/miniconda3/bin:${PATH}"
 
-#Install wxpython  - Takes forever
+
 RUN pip install wxpython --prefix=/opt/miniconda3
+
 
 CMD /bin/bash

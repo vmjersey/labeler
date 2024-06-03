@@ -1,7 +1,6 @@
 import wx
 from labeler.imaging import find_contours
 from labeler.grid import fill_grid
-from matplotlib.patches import Rectangle
 import time
 
 class SegmentFrame(wx.Frame):
@@ -11,8 +10,8 @@ class SegmentFrame(wx.Frame):
     def __init__(self,thing,parent):
         self.parent = parent
 
-        wx.Frame.__init__(self,thing, title="Image Segmentation", size=(200,100),style=wx.DEFAULT_FRAME_STYLE ^ wx.RESIZE_BORDER ^ wx.CLOSE_BOX)
-       
+        wx.Frame.__init__(self,thing, title="Image Segmentation", size=(465,500),style=wx.DEFAULT_FRAME_STYLE ^ wx.RESIZE_BORDER ^ wx.CLOSE_BOX)
+
          # Create Panel for Image Segmentation
         self.SegmentPanel = wx.Panel(self,style=wx.BORDER_SUNKEN | wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.CAPTION)
         self.SegmentPanel.SetBackgroundColour("dark gray")
@@ -26,17 +25,13 @@ class SegmentFrame(wx.Frame):
         SPsizer.Add(SPTitle, 0, wx.ALL |wx.CENTRE | wx.ALIGN_CENTER_HORIZONTAL)
         self.SegmentPanel.SetSizer(SPsizer)
 
-
-
         # Checkbox to get contours
         self.hbox = wx.CheckBox(self.SegmentPanel, label='Find Countours', pos=(20,25))
         self.hbox.SetValue(False)
         self.hbox.Bind(wx.EVT_CHECKBOX, self.on_h_check, self.hbox)
 
-        
         self.SegmentPanel.SetSize(200,200)
         self.SegmentPanel.SetPosition((5,5))
-
 
         # Create Panel for Applying Standard Model Segmentation
         self.ModelPanel = wx.Panel(self,style=wx.BORDER_SUNKEN | wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.CAPTION)
@@ -62,7 +57,6 @@ class SegmentFrame(wx.Frame):
         self.ModelPanel.SetSize(200,200)
         self.ModelPanel.SetPosition((205,5))
 
-
         # Create a Panel for applying custom user models
         self.UserPanel = wx.Panel(self,style=wx.BORDER_SUNKEN | wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.CAPTION)
         self.UserPanel.SetBackgroundColour("dark gray")
@@ -74,9 +68,6 @@ class SegmentFrame(wx.Frame):
         self.UserPanel.SetSize(200,200)
         self.UserPanel.SetPosition((5,205))
 
-
-
-        self.SetSize(415,450)
         self.Show(True)
 
 

@@ -9,7 +9,7 @@ class TransFrame(wx.Frame):
     def __init__(self,thing,parent):
         self.parent = parent
 
-        wx.Frame.__init__(self,thing, title="Image Tools", size=(200,100),style=wx.DEFAULT_FRAME_STYLE ^ wx.RESIZE_BORDER ^ wx.CLOSE_BOX)
+        wx.Frame.__init__(self,thing, title="Image Tools", size=(400,500),style=wx.DEFAULT_FRAME_STYLE ^ wx.RESIZE_BORDER ^ wx.CLOSE_BOX)
        
          # Create Panel for Image Color Operations
         self.ColorPanel = wx.Panel(self,style=wx.BORDER_SUNKEN | wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.CAPTION)
@@ -178,7 +178,7 @@ class TransFrame(wx.Frame):
         self.MorphPanel.SetPosition((5,205))
 
 
-        self.SetSize(415,450)
+        self.SetSize(465,500)
         self.Show(True)
 
     def reset_boxes(self):
