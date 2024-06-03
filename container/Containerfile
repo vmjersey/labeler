@@ -1,0 +1,16 @@
+FROM fedora:39
+
+#Install O.S. Dependencies
+RUN dnf install git wget wxGTK-devel gcc g++ which -y
+
+#Install Anaconda
+RUN mkdir -p /opt/conda \
+	&& wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/miniconda.sh \
+	&& bash /tmp/miniconda.sh -b -u -p /opt/miniconda3
+
+ENV PATH="/opt/miniconda3/bin:${PATH}"
+
+#Install wxpython  - Takes forever
+RUN pip install wxpython --prefix=/opt/miniconda3
+
+CMD /bin/bash
