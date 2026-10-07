@@ -14,17 +14,11 @@ def import_grid_csv(master,pathname):
     with open(pathname) as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
 
-        rownum=0
-        for row in csv_reader:
-            # Don't read in header
+        for rownum, row in enumerate(csv_reader):
+            # Skip the header row
             if rownum == 0:
-                rownum+=1
-                next
-            else:
-                lines.append(row)
-            rownum+=1
-            
-    fill_grid(master)  
+                continue
+            lines.append(row)
 
     return lines     
 
@@ -85,10 +79,12 @@ def write_grid_csv(master,default_csvfile=''):
     '''
 
     if default_csvfile == '':
-        # By default we want to name the csv file with the same file prefix.
+        # By default we want to name the csv file with the same file prefix,
+        # and save it next to the image.  This lets the "already labeled"
+        # detection in utils.get_list_files find it via the sibling csv.
         fileroot = os.path.basename(master.imagepath)
         id = os.path.splitext(fileroot)[0]
-        default_csvfile = id+".csv"
+        default_csvfile = os.path.join(os.path.dirname(master.imagepath), id+".csv")
 
 
     # Get column titles and coordinates in string from
@@ -120,7 +116,14 @@ def highlight_row(master,rowselect):
         Highlight the row in the Grid of the selected rectangle
     '''
 
+    # Ignore selections that don't correspond to a rectangle
+    if rowselect is None:
+        return
+
     column_labels,grid_list = get_grid_list(master)
+
+    if rowselect >= len(grid_list):
+        return
 
     for rownum in range(len(grid_list)):
         for colnum in range(len(column_labels)):

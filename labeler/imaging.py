@@ -17,8 +17,10 @@ def find_contours(master,image):
         area = cv2.contourArea(contour)
         # Don't want tiny rectangles
         if area > 50:
-            rect = cv2.boundingRect(contour) 
-            rects.append(rect)
+            x,y,w,h = cv2.boundingRect(contour)
+            # boundingRect gives (x, y, width, height); give callers
+            # the (x0, y0, x1, y1) corner form they expect.
+            rects.append((x, y, x + w, y + h))
 
     return rects
 
@@ -165,7 +167,7 @@ def extract_fg(image):
    
     if len(image.shape) > 2:
         # if color image reshape mask back to three channels
-        thresh = cv2.cvtColor(thresh,cv2.COLOR_GRAY2RGB)
+        thresh = cv2.cvtColor(thresh,cv2.COLOR_GRAY2BGR)
         
 
     # Now subract the mask from the image
@@ -177,11 +179,11 @@ def convert_gs(master,image):
     '''
         Convert a color image to grayscale
     '''
-    # If something is already a grayscale, probably need to convert 
-    # back to original
+    # If the input is already grayscale, make it look like a color image
+    # first so the channel conversion below always works.
     if len(image.shape) < 3:
-        image = master.original_image.copy()
- 
+        image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+
     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     return gray_image
 
@@ -205,10 +207,9 @@ def convert_canny(master,image):
     '''
         Run Canny on an image
     '''
-    # If something is already a grayscale, probably need to convert 
-    # back to original
-    if len(image.shape) < 3:
-        image = master.original_image.copy()
+    # Canny only works on single-channel inputs
+    if len(image.shape) > 2:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     canny_image = cv2.Canny(image,150,200)
     
@@ -273,6 +274,17 @@ def write_image(master,imagepathname):
     '''
         Save image to a file with what ever edits have been done.
     '''
-    master.figure.savefig(imagepathname)
+    fig = master.figure
+
+    # Render the output at the image's native resolution, not the size of
+    # the on-screen canvas.
+    fig.set_size_inches(master.image_shape[1]/fig.dpi,
+                        master.image_shape[0]/fig.dpi)
+    try:
+        fig.savefig(imagepathname)
+    finally:
+        # Restore the on-screen render size for the next canvas draw.
+        pane_width, pane_height = master.canvas_pixel_size
+        fig.set_size_inches(pane_width/fig.dpi, pane_height/fig.dpi)
 
 

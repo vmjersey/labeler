@@ -206,8 +206,7 @@ class TransFrame(wx.Frame):
         self.sybox.SetValue(False)
 
         # Put old image back
-        self.parent.current_image = self.parent.original_image
-        #self.parent.RefreshImage()
+        self.parent.current_image = self.parent.original_image.copy()
         # reload
         self.parent.BasicRefresh()
 

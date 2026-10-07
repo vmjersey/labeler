@@ -97,9 +97,7 @@ class ImageLabeler(wx.App):
         menuSaveImage = filemenu.Append(wx.ID_SAVEAS,  "&Save Image",  "Save Image")
         menuExit  = filemenu.Append(wx.ID_EXIT,  "&Exit",  "Exit Image Labeler")
         
-        # Setting up the models menu
-        configmenu  = wx.Menu()
-        menuConfigModel = configmenu.Append(wx.ID_ABOUT, "&Models", "Configure Custom Models")
+        
 
 
 
@@ -107,7 +105,6 @@ class ImageLabeler(wx.App):
         # Creating the menubar.
         menuBar = wx.MenuBar()
         menuBar.Append(filemenu,"&File") # Adding the "filemenu" to the MenuBar
-        menuBar.Append(configmenu,"&Config")
         self.frame.SetMenuBar(menuBar)  # Adding the MenuBar to the Frame content.
 
 
@@ -118,11 +115,11 @@ class ImageLabeler(wx.App):
         self.frame.Bind(wx.EVT_MENU, self.OnFileExit, menuExit)
         self.frame.Bind(wx.EVT_MENU, self.OnSaveGrid, menuSaveGrid)
         self.frame.Bind(wx.EVT_MENU, self.OnSaveImage, menuSaveImage)
-        self.frame.Bind(wx.EVT_MENU, self.OnConfigModel,menuConfigModel)
 
 
         #Keep track of how many images you have displayed
         self.imagecounter = 0
+        self.cur_obj_num = 0
 
         #Define where this program should find images
         if self.image_dir == None:
@@ -297,15 +294,17 @@ class ImageLabeler(wx.App):
         # Frame for image segmentation
         self.SegFrame = SegmentFrame(None,self)
 
-        # Frame for configuring models
-        self.ModelFrame = None
-
 
     def OnGridLeft(self,event):
         '''
             Action taken when left click happens on grid
         '''
         row = event.GetRow()
+
+        # Ignore clicks on grid rows that don't have a rectangle yet
+        if row >= len(self.rect_obj_list):
+            return
+
         self.selected_rect = row
         self.change_rect_color()
         highlight_row(self,row)
@@ -344,14 +343,8 @@ class ImageLabeler(wx.App):
         self.cursor_mode = "nobb"
        
         self.toggle_cursor_mode(self.sibut,"zoom")
+        self.toggle_off_mode()
         self.toolbar.zoom()
-        # Toggle off other buttons
-        if self.selected_button == 'HOME':
-            self.toolbar.home()
-        elif self.selected_button == 'PAN':
-            self.toolbar.pan()
-        elif self.selected_button == 'PLOT`':
-            self.toolbar.plot()
 
         self.selected_button = "ZOOM"
 
@@ -366,8 +359,6 @@ class ImageLabeler(wx.App):
             self.toolbar.zoom()
         elif self.selected_button == 'PAN':
             self.toolbar.pan()
-        elif self.selected_button == 'PLOT`':
-            self.toolbar.plot()
         elif self.selected_button == 'HOME':
             self.toolbar.home()
 
@@ -430,6 +421,9 @@ class ImageLabeler(wx.App):
                 self.cur_obj_num = i
                 break
             i+=1
+        else:
+            self.user_error("The current image is not part of the batch list.")
+            return 0
         
 
         if self.cur_obj_num+1 == len(self.images_obj):
@@ -459,6 +453,9 @@ class ImageLabeler(wx.App):
                 self.cur_obj_num = i
                 break
             i+=1
+        else:
+            self.user_error("The current image is not part of the batch list.")
+            return 0
 
 
         if self.cur_obj_num == 0:
@@ -484,8 +481,6 @@ class ImageLabeler(wx.App):
         self.frame.Destroy()
         self.TransFrame.Close()
         self.SegFrame.Close()
-        if self.ModelFrame != None:
-            self.ModelFrame.Close()
 
 
     def OnImportGrid(self,event):
@@ -499,18 +494,17 @@ class ImageLabeler(wx.App):
             # Get Pathname
             pathname = fileDialog.GetPath()
 
-            # Read file into list
-            new_coords = import_grid_csv(self,pathname)
-            
+            # Start from a clean slate
+            self.clear_bb()
+
             # Loop through coordinates and draw rectangle
-            for coord in new_coords:
+            for coord in import_grid_csv(self,pathname):
                 self.draw_rect(coord)
 
-            self.canvas.draw()
+            # Populate the grid with the imported coordinates
+            fill_grid(self)
 
-    def OnConfigModel(self,event):
-        self.ModelFrame = ModelFrame(None,self) 
-        
+            self.canvas.draw()
 
     def draw_rect(self,rect):
         if len(rect) > 4:
@@ -665,6 +659,10 @@ class ImageLabeler(wx.App):
             self.x0 = event.xdata
             self.y0 = event.ydata
 
+            # Show the placeholder rectangle immediately so the user gets
+            # live feedback while dragging.
+            self.canvas.draw_idle()
+
     def OnMotion(self,event):
         '''
             Action taken when mouse movement happens over the canvas
@@ -681,7 +679,11 @@ class ImageLabeler(wx.App):
                 self.y1 = self.y0+dy
                 self.selected_rect_obj.set_x(self.x1)
                 self.selected_rect_obj.set_y(self.y1)
-                self.selected_rect_obj.figure.canvas.draw()
+
+                # Defer the paint until wx is idle.  A synchronous draw()
+                # here re-renders the whole image on every motion event and
+                # the box doesn't track the mouse while dragging.
+                self.canvas.draw_idle()
                 
             return 0
         # If the mouse has been pressed draw an updated rectangle when the mouse is 
@@ -695,11 +697,20 @@ class ImageLabeler(wx.App):
                 self.x1 = event.xdata
                 self.y1 = event.ydata
 
-            # Set the width and height and draw the rectangle
-            self.rect.set_width(self.x1 - self.x0)
-            self.rect.set_height(self.y1 - self.y0)
-            self.rect.set_xy((self.x0, self.y0))
-            self.canvas.draw()
+            # Only resize the rectangle once we have a real origin and
+            # cursor position.  xdata/ydata are None while the cursor is
+            # outside the image, and None here used to raise a TypeError,
+            # which silently froze the live draw until the mouse was released.
+            if (self.x0 is not None and self.y0 is not None and
+                    self.x1 is not None and self.y1 is not None):
+                # Set the width and height and draw the rectangle
+                self.rect.set_width(self.x1 - self.x0)
+                self.rect.set_height(self.y1 - self.y0)
+                self.rect.set_xy((self.x0, self.y0))
+
+            # Defer the actual painting until wx is idle so a drag doesn't
+            # re-render the whole image on every motion event.
+            self.canvas.draw_idle()
 
     def OnLeftUp(self,event):
         '''
@@ -714,7 +725,8 @@ class ImageLabeler(wx.App):
             x1 = self.selected_rect_obj.get_bbox().x1
             y1 = self.selected_rect_obj.get_bbox().y1
 
-            self.selected_rect_obj.figure.canvas.draw()
+            # Final repaint at the release position.
+            self.canvas.draw_idle()
             self.is_moving = False
 
             self.press = None
@@ -735,16 +747,34 @@ class ImageLabeler(wx.App):
                 self.x1 = event.xdata
                 self.y1 = event.ydata
 
-            # Set the width and height and origin of the bounding rectangle
-            self.boundingRectWidth =  self.x1 - self.x0
-            self.boundingRectHeight =  self.y1 - self.y0
-            self.bouningRectOrigin = (self.x0, self.y0)
+            # All four corners must be known before we resize the rectangle,
+            # otherwise releasing off the image would do arithmetic on None.
+            # A corner must also be a real drag: a plain click or a sub-10px
+            # drag shouldn't leave a degenerate box in the grid.  (Abs handles
+            # boxes dragged in any direction.)
+            if (self.x0 is not None and self.y0 is not None and
+                    self.x1 is not None and self.y1 is not None and
+                    abs(self.x1 - self.x0) > 10 and
+                    abs(self.y1 - self.y0) > 10):
+                # Set the width and height and origin of the bounding rectangle
+                self.boundingRectWidth =  self.x1 - self.x0
+                self.boundingRectHeight =  self.y1 - self.y0
+                self.bouningRectOrigin = (self.x0, self.y0)
 
-            # Draw the bounding rectangle
-            self.rect.set_width(self.boundingRectWidth)
-            self.rect.set_height(self.boundingRectHeight)
-            self.rect.set_xy((self.x0, self.y0))
-            self.canvas.draw()
+                # Draw the bounding rectangle
+                self.rect.set_width(self.boundingRectWidth)
+                self.rect.set_height(self.boundingRectHeight)
+                self.rect.set_xy((self.x0, self.y0))
+            else:
+                # Not a real box (click, off-canvas release, or tiny drag):
+                # take it off the canvas and don't add it to the grid.
+                self.rect.remove()
+                self.canvas.draw_idle()
+                return 0
+
+            # The box is now solid; defer the paint so wx really shows the
+            # linestyle change when the drag ends.
+            self.canvas.draw_idle()
 
             # Keep list of rect objects
             self.rect_obj_list.append(self.rect)
@@ -752,6 +782,7 @@ class ImageLabeler(wx.App):
    
             # Fill the grid with the bounding boxes
             fill_grid(self)
+            return 0
 
 
  
@@ -839,10 +870,12 @@ class ImageLabeler(wx.App):
             self.user_error("There is nothing to delete.") 
             return 1
         
-        try:
-            self.selected_rect
-        except:
+        if not hasattr(self, 'selected_rect'):
             self.user_error("You haven't selected a rectangle yet.") 
+            return 1
+
+        if self.selected_rect >= len(self.rect_obj_list):
+            self.user_error("The selected row is empty.") 
             return 1 
 
         rectangle = self.rect_obj_list[self.selected_rect]
@@ -853,8 +886,9 @@ class ImageLabeler(wx.App):
         rectangle.remove()
         # Remove coordinates from grid
         self.BBGrid.DeleteRows(self.selected_rect)
-        # redraw the canvas
-        self.canvas.draw()
+        # Defer the repaint: deletes come from keyboard handlers, and a
+        # synchronous draw there doesn't get painted until the next event.
+        self.canvas.draw_idle()
 
         # clear
         del self.selected_rect
@@ -865,6 +899,12 @@ class ImageLabeler(wx.App):
         '''
         # Set selected rectangle line color black
         if len(self.rect_obj_list) < 1:
+            return 0
+
+        if not hasattr(self, 'selected_rect'):
+            return 0
+
+        if self.selected_rect >= len(self.rect_obj_list):
             return 0
         
         rect = self.rect_obj_list[self.selected_rect]
@@ -953,7 +993,18 @@ class ImageLabeler(wx.App):
         #Set Overall frame size
         self.frame.SetSize((frame_width,frame_height))
 
-        self.canvas.SetSize((self.image_shape[1], self.image_shape[0]))
+        # The canvas must match the panel it lives in, otherwise the image
+        # only occupies part of the space.
+        self.canvas.SetSize((img_pane_width,img_pane_height))
+        self.canvas.SetMinSize((img_pane_width,img_pane_height))
+        self.canvas.SetMaxSize((img_pane_width,img_pane_height))
+
+        # Keep the matplotlib figure's render size in lock-step with the
+        # canvas widget.  Without this the figure is rendered at its default
+        # 640x480 and the image never fills the canvas.
+        self.canvas_pixel_size = (img_pane_width, img_pane_height)
+        self.figure.set_size_inches(img_pane_width/self.figure.dpi,
+                                    img_pane_height/self.figure.dpi)
 
         # Reset axes so they don't get messed up when zooming        
         self.axes.set_ybound(0,self.image_shape[0])
@@ -979,24 +1030,28 @@ class ImageLabeler(wx.App):
         wx.MessageBox(message, 'Error', wx.ICON_ERROR | wx.OK)
 
 
-parser = argparse.ArgumentParser(description='A gui to help expedite the labeling of images, namely with bounding boxes.') 
-parser.add_argument('--file', help='Starting file to opened directly by image labeler.')
-parser.add_argument('--imagedir', help='Starting directory, where the labeler will get list of images to be labeled.  If not specified current working direcgtory will be used.')
-parser.add_argument('--confdir', help="Location of the configuration files and custom models for the labeler application.  If not listed application will use default location in users home directory.")
+def main():
+    parser = argparse.ArgumentParser(description='A gui to help expedite the labeling of images, namely with bounding boxes.') 
+    parser.add_argument('--file', help='Starting file to opened directly by image labeler.')
+    parser.add_argument('--imagedir', help='Starting directory, where the labeler will get list of images to be labeled.  If not specified current working direcgtory will be used.')
+    parser.add_argument('--confdir', help="Location of the configuration files and custom models for the labeler application.  If not listed application will use default location in users home directory.")
 
-args = parser.parse_args()
+    args = parser.parse_args()
+
+    # Assign arguments to variables
+    image_file_arg = args.file
+    image_dir_arg = args.imagedir
+    conf_dir_arg = args.confdir
+
+    # Make sure the configuration directory and main.conf exist
+    ConfigFile(conf_dir=conf_dir_arg)
+
+    app = ImageLabeler(starting_image=image_file_arg, image_dir=image_dir_arg, conf_dir=conf_dir_arg)
+    app.MainLoop()
 
 
-# Assign arguments to variables
-image_file_arg=args.file
-image_dir_arg=args.imagedir
-conf_dir_arg=args.confdir
-
-config = ConfigFile(conf_dir=conf_dir_arg)
-print(config.main)
-
-app = ImageLabeler(starting_image=image_file_arg,image_dir=image_dir_arg,conf_dir=conf_dir_arg)
-app.MainLoop()
+if __name__ == "__main__":
+    main()
 
 
 

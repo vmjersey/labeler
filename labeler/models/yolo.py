@@ -1,5 +1,11 @@
-from imageai.Detection import ObjectDetection
+import os
+
 import labeler
+
+try:
+    from imageai.Detection import ObjectDetection
+except ImportError:
+    ObjectDetection = None
 
 # Got the model and weights from here: 
 # https://machinelearningmastery.com/how-to-perform-object-detection-with-yolov3-in-keras/
@@ -10,14 +16,17 @@ class YOLOv3():
     '''
 
     def __init__(self,parent):
-    
-        self.models_path = labeler.__path__
+
+        if ObjectDetection is None:
+            raise RuntimeError("labeler.models.yolo requires ImageAI; install it and provide a yolov3.h5 weights file before use.")
+
+        self.models_path = labeler.__path__[0]
         self.parent = parent 
 
         self.detector = ObjectDetection()
         self.detector.setModelTypeAsYOLOv3()
         
-        self.detector.setModelPath(self.models_path + "/models/yolov3.h5")
+        self.detector.setModelPath(os.path.join(self.models_path, "models", "yolov3.h5"))
         
         self.detector.loadModel()
 

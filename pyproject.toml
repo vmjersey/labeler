@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "labeler"
+version = "0.0.2"
+description = "Image labeler for machine learning"
+readme = "README.md"
+requires-python = ">=3.6"
+authors = [
+    { name = "James L. Barker", email = "vmjersey@hotmail.com" },
+]
+urls = { Homepage = "https://github.com/vmjersey/labeler.git" }
+
+dependencies = [
+    "wxpython",
+    # OpenCV 4.4+ provides the convenience wrappers used in labeler.imaging
+    # (cv2.Sobel, cv2.Canny, cv2.GaussianBlur, cv2.normalize, ...).
+    "opencv-python>=4.4",
+    "shapely",
+    "scipy",
+    "matplotlib",
+    "scikit-learn",
+]
+
+[project.scripts]
+img_label = "img_label:main"
+
+[tool.setuptools]
+packages = ["labeler", "labeler.models"]
+py-modules = ["img_label"]
+
+[tool.setuptools.package-data]
+"*" = ["*.jpg", "icons/*.png"]

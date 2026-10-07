@@ -13,17 +13,14 @@ def get_list_files(search_path):
 
     # Build an object that contains path, and other information about image
     file_obj = []
-    i=0
     for full_filepath in files:
         file_size = os.path.getsize(full_filepath)
         
-        #check to see if CSV labels file exists for image
+        # Check to see if a CSV labels file exists for this image
         file_csv = os.path.splitext(full_filepath)[0] + ".csv"
         
         if os.path.exists(file_csv) == False:
             file_csv = None
-
-                
 
         file_obj.append(
             { 
@@ -45,7 +42,7 @@ def get_list_files(search_path):
 
 
 def get_image_patches(image,patch_size=(10,10)):
-    patches = image.extract_patches_2d(one_image, patch_size)
+    patches = extract_patches_2d(image, patch_size)
     return patches
 
 
@@ -58,37 +55,28 @@ def check_inside_rect(coord,rect):
         coord : (int,int) representing (x,y)
     '''
 
-
-
     x = coord[0]
     y = coord[1]
-
-    xyes = 0
-    yyes = 0
 
     x1 = rect.get_bbox().x0
     y1 = rect.get_bbox().y0
     x2 = rect.get_bbox().x1
     y2 = rect.get_bbox().y1
 
-    # Check if mouse is between x1 and x2
-    if x1 < x2:
-        if (x > x1) & (x < x2):
-            xyes += 1
+    # Bounding boxes may have been dragged with reversed corners,
+    # so accept either ordering.  Inclusive bounds so that clicking
+    # exactly on an edge still selects the box.
+    if (x1 <= x <= x2) or (x2 <= x <= x1):
+        xyes = True
     else:
-        if (x < x1) & (x>x2):
-            xyes += 1
+        xyes = False
 
-    # Check if mouse is between y1 and y2
-    if y1 < y2:
-        if (y > y1) & (y < y2):
-            yyes += 1
+    if (y1 <= y <= y2) or (y2 <= y <= y1):
+        yyes = True
     else:
-        if (y < y1) & (y>y2):
-            yyes += 1
+        yyes = False
 
-
-    if (xyes > 0) & (yyes > 0): #FOUND!
+    if xyes and yyes: #FOUND!
         return 1
     else: # NOT FOUND!
         return 0

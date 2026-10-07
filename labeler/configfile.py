@@ -1,10 +1,7 @@
-import wx
-import time
 from pathlib import Path
 import configparser
 import os
 import getpass
-import io
 
 class ConfigFile():
     ''' 
@@ -63,26 +60,19 @@ class ConfigFile():
                 # Something is not quite right with this path
                 print("Error: Main Configuration file is not a file, ", conf_file)
                 return 1
-        # Lets create it
+        # The file doesn't exist, so create it and read it back in so the
+        # caller always gets a ConfigParser object back.
         else:
-            write_result=1
-            #Routine for creating new main.conf
-            if conf_file.find("main.conf"):    
+            if "main.conf" in conf_file:
                 write_result = self.create_main_conf(conf_file)
+                if write_result == 0:
+                    return self.read_conf(conf_file)
 
-            if write_result == 1:
                 print("Write of file was unsucessful: ", conf_file)
                 return 1
-            else:
-                return 0            
 
-            # Now create object
-            read_result = self.read_conf(conf_file)
-            if read_result == 1:
-                print("Read of file was unsucessful: ", conf_file)
-                return 1
-            else:
-                return read_result
+            print("Unexpected configuration file: ", conf_file)
+            return 1
 
     def create_main_conf(self,conf_file):
         '''
